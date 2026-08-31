@@ -541,13 +541,33 @@
   display: none;
 }
 
+/* Custom scrollbar hiding utilities for clean POS & admin internal scroll containers */
+.scrollbar-hidden,
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
 @page {
   size: A4 portrait;
   margin: 14mm;
 }
 
 @media print {
-  .no-print { display: none !important; }
+  .no-print,
+  [data-sonner-toaster],
+  [data-sonner-toast],
+  [data-radix-popper-content-wrapper],
+  .toaster {
+    display: none !important;
+  }
   .print-only { display: block !important; }
   body { background: #fff !important; }
   .print-doc {

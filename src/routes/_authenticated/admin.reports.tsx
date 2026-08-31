@@ -139,28 +139,28 @@ function Reports() {
 
           <div className="grid gap-3 lg:grid-cols-2">
             <Section title="Where the money came from">
-              <TableShell>
+              <TableShell minWidth={false} tableClassName="w-full table-fixed">
                 <tbody>
                   <tr>
-                    <Td>Repairs</Td>
+                    <Td className="truncate">Repairs</Td>
                     <Td className="text-right">
                       <Money pence={repairRevenue} />
                     </Td>
                   </tr>
                   <tr>
-                    <Td>Phone and product sales</Td>
+                    <Td className="truncate">Phone and product sales</Td>
                     <Td className="text-right">
                       <Money pence={salesRevenue} />
                     </Td>
                   </tr>
                   <tr>
-                    <Td>Cost of items sold</Td>
+                    <Td className="truncate">Cost of items sold</Td>
                     <Td className="text-right">
                       −<Money pence={salesCost} />
                     </Td>
                   </tr>
                   <tr className="bg-surface">
-                    <Td className="font-extrabold">Gross profit</Td>
+                    <Td className="truncate font-extrabold">Gross profit</Td>
                     <Td className="text-right font-extrabold">
                       <Money pence={grossProfit} />
                     </Td>
@@ -171,12 +171,12 @@ function Reports() {
 
             <Section title="Payments taken by method">
               {Object.keys(byMethod).length ? (
-                <TableShell>
+                <TableShell minWidth={false} tableClassName="w-full table-fixed">
                   <tbody>
                     {Object.entries(byMethod).map(([method, amount]) => (
                       <tr key={method}>
-                        <Td>{method}</Td>
-                        <Td className="text-right">
+                        <Td className="truncate font-semibold">{method}</Td>
+                        <Td className="text-right font-semibold">
                           <Money pence={amount} />
                         </Td>
                       </tr>
@@ -191,18 +191,18 @@ function Reports() {
 
           <div className="grid gap-3 lg:grid-cols-2">
             <Section title={`Stock ageing — ${money(stockValue)} held in ${inStock.length} phones`}>
-              <TableShell>
+              <TableShell minWidth={false} tableClassName="w-full table-fixed">
                 <thead>
                   <tr>
-                    <Th>Age</Th>
-                    <Th className="text-right">Phones</Th>
-                    <Th className="text-right">Cost value</Th>
+                    <Th className="w-[45%]">Age</Th>
+                    <Th className="w-[25%] text-right">Phones</Th>
+                    <Th className="w-[30%] text-right">Cost value</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {ageBands.map((b) => (
                     <tr key={b.label}>
-                      <Td>{b.label}</Td>
+                      <Td className="truncate">{b.label}</Td>
                       <Td className="text-right font-semibold">{b.count}</Td>
                       <Td className="text-right">
                         <Money pence={b.value} />
@@ -215,18 +215,18 @@ function Reports() {
 
             <Section title="Most common repairs">
               {topFaults.length ? (
-                <TableShell>
+                <TableShell minWidth={false} tableClassName="w-full table-fixed">
                   <thead>
                     <tr>
-                      <Th>Fault</Th>
-                      <Th className="text-right">Jobs</Th>
-                      <Th className="text-right">Revenue</Th>
+                      <Th className="w-[50%]">Fault</Th>
+                      <Th className="w-[20%] text-right">Jobs</Th>
+                      <Th className="w-[30%] text-right">Revenue</Th>
                     </tr>
                   </thead>
                   <tbody>
                     {topFaults.map(([fault, v]) => (
                       <tr key={fault}>
-                        <Td className="capitalize">{fault}</Td>
+                        <Td className="truncate capitalize">{fault}</Td>
                         <Td className="text-right font-semibold">{v.count}</Td>
                         <Td className="text-right">
                           <Money pence={v.total} />
@@ -243,18 +243,18 @@ function Reports() {
 
           <Section title="Products to reorder">
             {lowStock.length ? (
-              <TableShell>
+              <TableShell minWidth={false} tableClassName="w-full table-fixed">
                 <thead>
                   <tr>
-                    <Th>Product</Th>
-                    <Th className="text-right">In stock</Th>
-                    <Th className="text-right">Reorder at</Th>
+                    <Th className="w-[50%]">Product</Th>
+                    <Th className="w-[25%] text-right">In stock</Th>
+                    <Th className="w-[25%] text-right">Reorder at</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {lowStock.map((p) => (
                     <tr key={p.id}>
-                      <Td className="font-semibold">{p.name}</Td>
+                      <Td className="truncate font-semibold">{p.name}</Td>
                       <Td className="text-right font-extrabold text-primary">{p.quantity}</Td>
                       <Td className="text-right text-muted-foreground">{p.reorder_level}</Td>
                     </tr>

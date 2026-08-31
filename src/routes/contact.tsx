@@ -81,8 +81,11 @@ function ContactPage() {
               </div>
               <div className="flex gap-3">
                 <Mail className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-                <a href={`mailto:${business?.email ?? ""}`} className="font-bold hover:text-primary">
-                  {business?.email ?? "Email to be confirmed"}
+                <a
+                  href={`mailto:${business?.email || "tefflakki188@gmail.com"}`}
+                  className="font-bold hover:text-primary"
+                >
+                  {business?.email || "tefflakki188@gmail.com"}
                 </a>
               </div>
             </div>

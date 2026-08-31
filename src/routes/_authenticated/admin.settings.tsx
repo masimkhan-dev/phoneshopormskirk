@@ -48,7 +48,7 @@ function Settings() {
       tagline: str(data['tagline']),
       phone: str(data['phone']),
       whatsapp: str(data['whatsapp']),
-      email: str(data['email']),
+      email: str(data['email']) || "tefflakki188@gmail.com",
       address_line1: str(data['address_line1']),
       city: str(data['city']),
       postcode: str(data['postcode']),

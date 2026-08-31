@@ -94,6 +94,7 @@ function Invoices() {
                 <Th>Customer</Th>
                 <Th>Date</Th>
                 <Th className="text-right">Total</Th>
+                <Th className="text-right">Paid</Th>
                 <Th className="text-right">Balance</Th>
                 <Th>Status</Th>
               </tr>
@@ -115,6 +116,9 @@ function Invoices() {
                   <Td className="text-muted-foreground">{ukDateTime(inv.created_at)}</Td>
                   <Td className="text-right">
                     <Money pence={inv.total_pence} />
+                  </Td>
+                  <Td className="text-right font-semibold">
+                    <Money pence={inv.amount_paid_pence} />
                   </Td>
                   <Td className="text-right">
                     <Money pence={inv.balance_pence} />

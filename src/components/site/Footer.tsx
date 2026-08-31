@@ -191,8 +191,11 @@ export function Footer() {
             </li>
             <li className="flex gap-2">
               <Mail className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-              <a href={`mailto:${business?.email ?? ""}`} className="hover:text-white">
-                {business?.email ?? "Email to be confirmed"}
+              <a
+                href={`mailto:${business?.email || "tefflakki188@gmail.com"}`}
+                className="hover:text-white"
+              >
+                {business?.email || "tefflakki188@gmail.com"}
               </a>
             </li>
           </ul>

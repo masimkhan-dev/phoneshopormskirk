@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { downloadCsv } from "@/lib/admin/csv";
 import { money, penceToPounds, poundsToPence } from "@/lib/admin/money";
 import { dayEndQuery } from "@/lib/admin/queries";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/day-end")({
   component: DayEnd,
@@ -158,19 +159,19 @@ function DayEnd() {
           <div className="grid gap-3 lg:grid-cols-2">
             <Section title="By payment method">
               {Object.keys(summary.byMethod).length ? (
-                <TableShell>
+                <TableShell minWidth={false} tableClassName="w-full table-fixed">
                   <thead>
                     <tr>
-                      <Th>Method</Th>
-                      <Th className="text-right">In</Th>
-                      <Th className="text-right">Out</Th>
-                      <Th className="text-right">Net</Th>
+                      <Th className="w-[34%]">Method</Th>
+                      <Th className="w-[22%] text-right">In</Th>
+                      <Th className="w-[22%] text-right">Out</Th>
+                      <Th className="w-[22%] text-right">Net</Th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(summary.byMethod).map(([m, v]) => (
                       <tr key={m}>
-                        <Td className="font-semibold">{m}</Td>
+                        <Td className="truncate font-semibold">{m}</Td>
                         <Td className="text-right">
                           <Money pence={v.in} />
                         </Td>
@@ -191,27 +192,41 @@ function DayEnd() {
 
             <Section title="Invoices raised">
               {data?.invoices.length ? (
-                <TableShell>
+                <TableShell minWidth={false} tableClassName="w-full table-fixed">
                   <thead>
                     <tr>
-                      <Th>Invoice</Th>
-                      <Th>Type</Th>
-                      <Th className="text-right">Total</Th>
+                      <Th className="w-[36%] sm:w-[32%]">Invoice</Th>
+                      <Th className="hidden sm:table-cell sm:w-[26%]">Type</Th>
+                      <Th className="w-[32%] sm:w-[22%] text-center">Status</Th>
+                      <Th className="w-[32%] sm:w-[20%] text-right">Total</Th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.invoices.map((i) => (
                       <tr key={i.id}>
-                        <Td className="font-semibold">
+                        <Td className="truncate font-semibold">
                           {i.invoice_number}
-                          {i.status === "VOID" && (
-                            <span className="ml-2 text-xs text-muted-foreground">voided</span>
-                          )}
                         </Td>
-                        <Td className="capitalize text-muted-foreground">
+                        <Td className="hidden truncate capitalize text-muted-foreground sm:table-cell">
                           {i.kind.replace("_", " ").toLowerCase()}
                         </Td>
-                        <Td className="text-right">
+                        <Td className="text-center">
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide",
+                              i.status === "VOID"
+                                ? "bg-muted text-muted-foreground"
+                                : i.payment_status === "PAID"
+                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                  : i.payment_status === "PARTIAL"
+                                    ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                    : "bg-tint text-primary",
+                            )}
+                          >
+                            {i.status === "VOID" ? "Void" : i.payment_status.toLowerCase()}
+                          </span>
+                        </Td>
+                        <Td className="text-right font-semibold">
                           <Money pence={i.total_pence} />
                         </Td>
                       </tr>
@@ -226,31 +241,32 @@ function DayEnd() {
 
           <Section title="Every payment on this day">
             {data?.payments.length ? (
-              <TableShell>
+              <TableShell minWidth={false} tableClassName="w-full table-fixed">
                 <thead>
                   <tr>
-                    <Th>Time</Th>
-                    <Th>Invoice</Th>
-                    <Th>Method</Th>
-                    <Th>Direction</Th>
-                    <Th className="text-right">Amount</Th>
+                    <Th className="w-[18%] sm:w-[15%]">Time</Th>
+                    <Th className="w-[30%] sm:w-[25%]">Invoice</Th>
+                    <Th className="w-[22%] sm:w-[20%]">Method</Th>
+                    <Th className="hidden sm:table-cell sm:w-[20%]">Direction</Th>
+                    <Th className="w-[30%] sm:w-[20%] text-right">Amount</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.payments.map((p) => (
                     <tr key={p.id}>
-                      <Td className="tabular-nums">
+                      <Td className="tabular-nums text-muted-foreground">
                         {new Date(p.created_at).toLocaleTimeString("en-GB", {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
                       </Td>
-                      <Td>{p.invoices?.invoice_number ?? "—"}</Td>
-                      <Td>{p.method}</Td>
-                      <Td className={p.direction === "OUT" ? "text-primary" : ""}>
+                      <Td className="truncate font-semibold">{p.invoices?.invoice_number ?? "—"}</Td>
+                      <Td className="truncate">{p.method}</Td>
+                      <Td className={cn("hidden truncate sm:table-cell", p.direction === "OUT" ? "text-primary" : "")}>
                         {p.direction === "IN" ? "Taken" : "Paid out"}
                       </Td>
-                      <Td className="text-right">
+                      <Td className={cn("text-right font-semibold", p.direction === "OUT" ? "text-primary" : "")}>
+                        {p.direction === "OUT" ? "−" : ""}
                         <Money pence={p.amount_pence} />
                       </Td>
                     </tr>

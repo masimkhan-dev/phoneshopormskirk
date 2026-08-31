@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 /** Print helpers. Keeps the browser page size in sync with the chosen format. */
 
 export type PrintFormat = "a4" | "thermal";
@@ -14,6 +16,7 @@ function clear() {
  */
 export function printDocument(format: PrintFormat) {
   if (typeof window === "undefined") return;
+  toast.dismiss();
   clear();
   if (format === "thermal") {
     const style = document.createElement("style");

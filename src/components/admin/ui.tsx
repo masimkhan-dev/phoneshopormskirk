@@ -476,20 +476,27 @@ export function CheckTile({
   onChange,
   label,
   className,
+  disabled,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <label
       className={cn(
-        "flex h-9 cursor-pointer items-center gap-2.5 self-end rounded-md border border-admin-border px-3 text-sm font-semibold",
+        "flex h-9 items-center gap-2.5 self-end rounded-md border border-admin-border px-3 text-sm font-semibold",
+        disabled ? "opacity-50 cursor-not-allowed bg-muted/40" : "cursor-pointer",
         className,
       )}
     >
-      <Checkbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />
+      <Checkbox
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={(v) => !disabled && onChange(v === true)}
+      />
       <span className="truncate">{label}</span>
     </label>
   );
@@ -622,10 +629,29 @@ export function StatCard({
 
 /* --------------------------------- tables --------------------------------- */
 
-export function TableShell({ children }: { children: ReactNode }) {
+export function TableShell({
+  children,
+  className,
+  tableClassName,
+  minWidth = true,
+}: {
+  children: ReactNode;
+  className?: string;
+  tableClassName?: string;
+  minWidth?: boolean | string;
+}) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[46rem] border-collapse text-sm">{children}</table>
+    <div className={cn("overflow-x-auto scrollbar-hidden", className)}>
+      <table
+        className={cn(
+          "w-full border-collapse text-sm",
+          minWidth === true && "min-w-[46rem]",
+          typeof minWidth === "string" && minWidth,
+          tableClassName,
+        )}
+      >
+        {children}
+      </table>
     </div>
   );
 }
@@ -640,7 +666,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "admin-th border-b border-admin-border px-3 py-2.5 text-left",
+        "admin-th border-b border-admin-border px-3 py-2 text-left text-xs",
         className,
       )}
     >
@@ -657,7 +683,7 @@ export function Td({
   className?: string;
 }) {
   return (
-    <td className={cn("border-b border-admin-border px-3 py-2.5 align-middle", className)}>
+    <td className={cn("border-b border-admin-border px-3 py-2 text-xs align-middle", className)}>
       {children}
     </td>
   );
@@ -667,18 +693,20 @@ export function EmptyState({
   title,
   description,
   action,
+  compact = false,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <div className="px-6 py-14 text-center">
-      <p className="text-sm font-bold">{title}</p>
+    <div className={cn("text-center", compact ? "px-4 py-7" : "px-6 py-14")}>
+      <p className={cn("font-bold text-foreground", compact ? "text-xs" : "text-sm")}>{title}</p>
       {description && (
-        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
+        <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">{description}</p>
       )}
-      {action && <div className="mt-4 flex justify-center">{action}</div>}
+      {action && <div className="mt-3 flex justify-center">{action}</div>}
     </div>
   );
 }
@@ -704,6 +732,7 @@ export function MoneyInput({
   placeholder = "0.00",
   disabled,
   required,
+  className,
 }: {
   id?: string;
   value: string;
@@ -711,9 +740,10 @@ export function MoneyInput({
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
+  className?: string;
 }) {
   return (
-    <div className="relative">
+    <div className={cn("relative", className)}>
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
         £
       </span>

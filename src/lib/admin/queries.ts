@@ -902,7 +902,7 @@ export const dayEndQuery = (day: string) =>
           .order("created_at"),
         supabase
           .from("invoices")
-          .select("id,invoice_number,kind,status,total_pence,refunded_pence,created_at")
+          .select("id,invoice_number,kind,status,payment_status,total_pence,refunded_pence,created_at")
           .gte("created_at", start)
           .lte("created_at", end)
           .order("created_at"),
@@ -916,6 +916,7 @@ export const dayEndQuery = (day: string) =>
             | "invoice_number"
             | "kind"
             | "status"
+            | "payment_status"
             | "total_pence"
             | "refunded_pence"
             | "created_at"

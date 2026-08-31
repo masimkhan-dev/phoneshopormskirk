@@ -476,19 +476,19 @@ function Index() {
 
       {/* 10 — DARK FAQ */}
       <section className="ink-panel section-y">
-        <div className="container-page grid gap-14 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="container-page grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <Reveal>
-            <span className="eyebrow-on-brand">Questions</span>
-            <h2 className="display-2 mt-4">Before you bring it in</h2>
-            <span className="rule-accent mt-6" />
-            <p className="lede mt-6 text-on-brand/80">
+            <span className="eyebrow-on-brand block">Questions</span>
+            <h2 className="display-2 mt-3 font-extrabold text-on-brand">Before you bring it in</h2>
+            <span className="rule-accent mt-5 block" />
+            <p className="lede mt-5 text-on-brand/85">
               The things customers ask us most, answered honestly. Anything we've missed, just
               message us and you'll get a straight answer.
             </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 to="/faq"
-                className="press inline-flex min-h-13 items-center justify-center rounded-full bg-primary px-7 text-sm font-extrabold text-primary-foreground shadow-lift"
+                className="press inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-7 text-sm font-extrabold text-primary-foreground shadow-lift hover:opacity-95"
               >
                 All FAQs
               </Link>
@@ -496,24 +496,24 @@ function Index() {
                 href={whatsappUrl(business)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="press inline-flex min-h-13 items-center justify-center rounded-full bg-whatsapp px-7 text-sm font-extrabold text-whatsapp-foreground shadow-lift"
+                className="press inline-flex min-h-12 items-center justify-center rounded-full bg-whatsapp px-7 text-sm font-extrabold text-whatsapp-foreground shadow-lift hover:opacity-95"
               >
                 Ask us on WhatsApp
               </a>
             </div>
-            <p className="mt-9 flex items-start gap-2 text-sm leading-relaxed text-on-brand/75">
+            <p className="mt-8 flex items-start gap-2 text-sm leading-relaxed text-on-brand/80">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
               Any guarantee on a repair or purchase is confirmed in writing on your receipt.
             </p>
             <Link
               to="/reviews"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-on-brand hover:underline"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-on-brand hover:underline"
             >
-              <Star className="size-4" aria-hidden />
+              <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden />
               Read our Google reviews
             </Link>
           </Reveal>
-          <div className="rounded-3xl bg-background p-4 shadow-lift md:p-6">
+          <div className="rounded-3xl bg-card p-2 sm:p-4 shadow-lift">
             <FaqList limit={6} />
           </div>
         </div>

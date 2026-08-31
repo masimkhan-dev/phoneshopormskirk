@@ -105,7 +105,7 @@ function PrivacyPage() {
             <p className="mt-2">
               {business?.business_name ?? "Phone Shop Ormskirk"}
               {fullAddress(business) ? `, ${fullAddress(business)}` : ", Ormskirk, United Kingdom"}.
-              {business?.email ? ` Email: ${business.email}.` : ""}
+              {` Email: ${business?.email || "tefflakki188@gmail.com"}.`}
               {business?.phone ? ` Phone: ${business.phone}.` : ""}
             </p>
           </div>

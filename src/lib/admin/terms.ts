@@ -148,10 +148,9 @@ export function draftFromSettings(settings: TermsSettings): TermsDraft {
     internal_note: "",
     customer_note: "",
     print_customer_note: true,
-    customer_acknowledged: false,
+    customer_acknowledged: true,
     include_exclusions: Boolean(settings.exclusions_text.trim()),
     customer_message: settings.customer_message ?? "",
-
   };
 }
 
@@ -181,7 +180,7 @@ export function termsDraftPayload(
     internal_note: draft.internal_note,
     customer_note: draft.customer_note,
     print_customer_note: draft.print_customer_note,
-    customer_acknowledged: draft.customer_acknowledged,
+    customer_acknowledged: true,
     show_on_thermal: settings?.show_on_thermal ?? true,
     show_on_a4: settings?.show_on_a4 ?? true,
     show_signature_line: settings?.show_signature_line ?? false,

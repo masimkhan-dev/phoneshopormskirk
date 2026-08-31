@@ -107,26 +107,29 @@ function NewRepair() {
 
   const terms = useTerms("REPAIR");
 
-  const disabled = save.isPending || !customer || !form.fault.trim() || totals.subtotal < 0;
+  const phoneDigits = (customer?.phone ?? "").replace(/\D/g, "").length;
+  const phoneInvalid = phoneDigits > 0 && phoneDigits !== 11;
+  const hasValidCustomer = !!customer?.name?.trim() && !phoneInvalid;
+  const disabled = save.isPending || !hasValidCustomer || !form.fault.trim() || totals.subtotal < 0;
 
   const submit = useCallback(
     (print: boolean) => {
       if (save.isPending) return;
-      if (!customer) {
-        toast.error("Please add a customer first.");
+      if (!customer?.name?.trim()) {
+        toast.error("Please enter the customer's name.");
+        return;
+      }
+      if (phoneInvalid) {
+        toast.error("Enter a complete 11-digit UK phone number or leave this field blank.");
         return;
       }
       if (!form.fault.trim()) {
         toast.error("Please complete the required fields.");
         return;
       }
-      if (terms.acknowledgementMissing) {
-        toast.error("Please tick the customer acknowledgement in Terms & warranty.");
-        return;
-      }
       save.mutate(print);
     },
-    [customer, form.fault, save, terms.acknowledgementMissing],
+    [customer?.name, phoneInvalid, form.fault, save],
   );
 
   useHotkeys(
@@ -137,7 +140,6 @@ function NewRepair() {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        submit(true);
       }}
     >
       <PageHeader
@@ -147,9 +149,9 @@ function NewRepair() {
       />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <FormSection title="Customer" cols={1} step={1}>
-            <CustomerPicker value={customer} onChange={setCustomer} label="" />
+            <CustomerPicker value={customer} onChange={setCustomer} required />
           </FormSection>
 
           <FormSection title="Device and fault" cols={3} step={2}>
@@ -170,155 +172,147 @@ function NewRepair() {
                 value={form.device_model}
                 onChange={(device_model) => setForm({ ...form, device_model })}
                 options={modelsFor(form.device_brand)}
-                placeholder="iPhone 13"
+                placeholder="iPhone 15"
               />
             </Field>
-            <Field label="Fault / repair" htmlFor="fault">
-              <ComboBox
+            <Field label="IMEI or serial" htmlFor="imei">
+              <Input
+                id="imei"
+                value={form.imei}
+                onChange={(e) => setForm({ ...form, imei: e.target.value })}
+                placeholder="15 digits"
+              />
+            </Field>
+            <Field label="Fault description" htmlFor="fault" className="sm:col-span-3">
+              <Input
                 id="fault"
                 value={form.fault}
-                onChange={(fault) => setForm({ ...form, fault })}
-                options={COMMON_FAULTS}
+                onChange={(e) => setForm({ ...form, fault: e.target.value })}
                 placeholder="Screen replacement"
-              />
-            </Field>
-            <Field label="Repair description (optional)" className="xl:col-span-3">
-              <Textarea
-                rows={2}
-                value={form.repair_description}
-                onChange={(e) => setForm({ ...form, repair_description: e.target.value })}
+                required
               />
             </Field>
           </FormSection>
 
           <TermsWarranty terms={terms} step={3} />
 
-          <MoreDetails cols={3}>
-            <Field label="IMEI" htmlFor="imei">
-              <Input
-                id="imei"
-                className="h-9"
-                inputMode="numeric"
-                value={form.imei}
-                onChange={(e) => setForm({ ...form, imei: e.target.value })}
-              />
-            </Field>
-            <Field label="Serial" htmlFor="serial">
-              <Input
-                id="serial"
-                className="h-9"
-                value={form.serial}
-                onChange={(e) => setForm({ ...form, serial: e.target.value })}
-              />
-            </Field>
-            <Field label="Device condition" htmlFor="condition">
-              <SelectField
-                id="condition"
+          <MoreDetails cols={1} label="Extra notes (optional)">
+            <Field label="Condition notes">
+              <Textarea
+                rows={2}
                 value={form.device_condition}
-                onChange={(device_condition) => setForm({ ...form, device_condition })}
-                options={CONDITION_OPTIONS}
-                allowEmpty
-              />
-            </Field>
-            <Field label="Accessories received" htmlFor="accessories">
-              <ComboBox
-                id="accessories"
-                value={form.accessories_received}
-                onChange={(accessories_received) => setForm({ ...form, accessories_received })}
-                options={ACCESSORY_OPTIONS}
-                placeholder="Case, SIM tray"
-              />
-            </Field>
-            <Field label="Customer notes" className="xl:col-span-1">
-              <Textarea
-                rows={2}
-                value={form.customer_notes}
-                onChange={(e) => setForm({ ...form, customer_notes: e.target.value })}
-              />
-            </Field>
-            <Field label="Internal notes">
-              <Textarea
-                rows={2}
-                value={form.internal_notes}
-                onChange={(e) => setForm({ ...form, internal_notes: e.target.value })}
+                onChange={(e) => setForm({ ...form, device_condition: e.target.value })}
+                placeholder="Scratch on back, minor dent…"
               />
             </Field>
           </MoreDetails>
         </div>
 
-        <FormSection
-          title="Price and payment"
-          cols={1}
-          step={3}
-          className="lg:sticky lg:top-32 lg:self-start"
-        >
-          <Field label="Repair price" htmlFor="price">
-            <MoneyInput id="price" value={price} onChange={setPrice} required />
-          </Field>
-          <Field label="Discount" htmlFor="discount">
-            <MoneyInput id="discount" value={discount} onChange={setDiscount} />
-          </Field>
-          <Field label="Amount paid now" htmlFor="paid">
-            <MoneyInput id="paid" value={paid} onChange={setPaid} />
-          </Field>
-          <Field label="Payment method" htmlFor="method">
-            <SelectField
-              id="method"
-              value={form.payment_method}
-              onChange={(payment_method) => setForm({ ...form, payment_method })}
-              options={PAYMENT_METHODS}
-            />
-          </Field>
-          <dl className="rounded-md bg-surface p-2.5 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Total</dt>
-              <dd className="font-extrabold tabular-nums">{money(totals.total)}</dd>
+        <div className="space-y-2.5 lg:sticky lg:top-20 lg:self-start">
+          <FormSection
+            title="Price and payment"
+            cols={1}
+            step={4}
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Repair price" htmlFor="price">
+                <MoneyInput id="price" value={price} onChange={setPrice} required />
+              </Field>
+              <Field label="Discount" htmlFor="discount">
+                <MoneyInput id="discount" value={discount} onChange={setDiscount} />
+              </Field>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Paid</dt>
-              <dd className="font-extrabold tabular-nums">{money(totals.amountPaid)}</dd>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Amount paid" htmlFor="paid">
+                <MoneyInput id="paid" value={paid} onChange={setPaid} />
+              </Field>
+              <Field label="Payment method" htmlFor="method">
+                <SelectField
+                  id="method"
+                  value={form.payment_method}
+                  onChange={(payment_method) => setForm({ ...form, payment_method })}
+                  options={PAYMENT_METHODS}
+                />
+              </Field>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Balance</dt>
-              <dd className="font-extrabold tabular-nums text-primary">
-                {money(totals.balance)}
-              </dd>
+            <dl className="rounded-md bg-surface p-2.5 text-xs space-y-1">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Total</dt>
+                <dd className="font-extrabold tabular-nums">{money(totals.total)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Paid</dt>
+                <dd className="font-extrabold tabular-nums">{money(totals.amountPaid)}</dd>
+              </div>
+              <div className="flex justify-between border-t border-admin-border pt-1">
+                <dt className="text-muted-foreground">Balance</dt>
+                <dd className="font-extrabold tabular-nums text-primary">
+                  {money(totals.balance)}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="pt-1.5 space-y-2">
+              <Button
+                type="button"
+                className="w-full h-10 text-sm font-extrabold shadow-soft"
+                disabled={disabled}
+                onClick={() => submit(true)}
+              >
+                <Printer className="mr-2 size-4" /> Save &amp; print (F2)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-8 text-xs font-semibold"
+                disabled={disabled}
+                onClick={() => submit(false)}
+              >
+                {save.isPending ? (
+                  <Loader2 className="mr-2 size-3.5 animate-spin" />
+                ) : (
+                  <Save className="mr-2 size-3.5" />
+                )}
+                Save (Ctrl+Enter)
+              </Button>
             </div>
-          </dl>
-        </FormSection>
+          </FormSection>
+        </div>
       </div>
 
-      <ActionBar
-        summary={
-          <>
-            <SummaryFigure label="Total" value={money(totals.total)} />
-            <SummaryFigure label="Paid" value={money(totals.amountPaid)} />
-            <SummaryFigure label="Balance" value={money(totals.balance)} tone="primary" />
-          </>
-        }
-        hint={
-          <>
-            <span>
-              <Kbd>F2</Kbd> save &amp; print
-            </span>
-            <span>
-              <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> save
-            </span>
-          </>
-        }
-      >
-        <Button type="button" variant="outline" disabled={disabled} onClick={() => submit(false)}>
-          {save.isPending ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 size-4" />
-          )}
-          Save
-        </Button>
-        <Button type="submit" disabled={disabled}>
-          <Printer className="mr-2 size-4" /> Save &amp; print
-        </Button>
-      </ActionBar>
+      <div className="lg:hidden">
+        <ActionBar
+          summary={
+            <>
+              <SummaryFigure label="Total" value={money(totals.total)} />
+              <SummaryFigure label="Paid" value={money(totals.amountPaid)} />
+              <SummaryFigure label="Balance" value={money(totals.balance)} tone="primary" />
+            </>
+          }
+          hint={
+            <>
+              <span>
+                <Kbd>F2</Kbd> save &amp; print
+              </span>
+              <span>
+                <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> save
+              </span>
+            </>
+          }
+        >
+          <Button type="button" variant="outline" disabled={disabled} onClick={() => submit(false)}>
+            {save.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 size-4" />
+            )}
+            Save
+          </Button>
+          <Button type="button" disabled={disabled} onClick={() => submit(true)}>
+            <Printer className="mr-2 size-4" /> Save &amp; print
+          </Button>
+        </ActionBar>
+      </div>
     </form>
   );
 }

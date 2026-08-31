@@ -112,23 +112,30 @@ function BuyPhone() {
     },
   });
 
-  const disabled = save.isPending || !customer || !form.model.trim() || costPence <= 0;
+  const phoneDigits = (customer?.phone ?? "").replace(/\D/g, "").length;
+  const phoneInvalid = phoneDigits > 0 && phoneDigits !== 11;
+  const hasValidSeller = !!customer?.name?.trim() && !phoneInvalid;
+  const disabled = save.isPending || !hasValidSeller || !form.model.trim() || costPence <= 0;
   const marginPct = askingPence > 0 ? (expectedProfit / askingPence) * 100 : 0;
 
   const submit = useCallback(
     (print: boolean) => {
       if (save.isPending) return;
+      if (!customer?.name?.trim()) {
+        toast.error("Please enter seller name.");
+        return;
+      }
+      if (phoneInvalid) {
+        toast.error("Enter a complete 11-digit UK phone number or leave this field blank.");
+        return;
+      }
       if (disabled) {
         toast.error("Please complete the seller, model and price.");
         return;
       }
-      if (terms.acknowledgementMissing) {
-        toast.error("Please confirm the seller declaration in Terms & warranty.");
-        return;
-      }
       save.mutate(print);
     },
-    [disabled, save, terms.acknowledgementMissing],
+    [customer?.name, phoneInvalid, disabled, save],
   );
 
   useHotkeys(
@@ -142,16 +149,20 @@ function BuyPhone() {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        submit(true);
       }}
     >
 
       <PageHeader compact title="Buy a phone" description="Seller, handset, checks, payout." />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <FormSection title="Seller" cols={1} step={1}>
-            <CustomerPicker value={customer} onChange={setCustomer} label="" />
+            <CustomerPicker
+              value={customer}
+              onChange={setCustomer}
+              nameLabel="Seller name"
+              required
+            />
           </FormSection>
 
           <FormSection title="Handset" cols={3} step={2}>
@@ -215,7 +226,7 @@ function BuyPhone() {
               {CHECKS.map(([key, label]) => (
                 <label
                   key={key}
-                  className="flex cursor-pointer items-center gap-2 rounded-md border border-admin-border px-2.5 py-2 text-xs font-semibold"
+                  className="flex cursor-pointer items-center gap-2 rounded-md border border-admin-border px-2.5 py-1.5 text-xs font-semibold"
                 >
                   <Checkbox
                     checked={!!checks[key]}
@@ -283,84 +294,140 @@ function BuyPhone() {
           </MoreDetails>
         </div>
 
-        <FormSection title="Money" cols={1} step={4} className="lg:sticky lg:top-32 lg:self-start">
-          <Field label="Price paid to seller" htmlFor="cost">
-            <MoneyInput id="cost" value={cost} onChange={setCost} required />
-          </Field>
-          <Field label="Intended selling price" htmlFor="asking">
-            <MoneyInput id="asking" value={askingPrice} onChange={setAskingPrice} />
-          </Field>
-          <Field label="Paid by" htmlFor="method">
-            <SelectField
-              id="method"
-              value={form.payment_method}
-              onChange={(payment_method) => setForm({ ...form, payment_method })}
-              options={PAYMENT_METHODS}
-            />
-          </Field>
-        </FormSection>
+        <div className="space-y-2.5 lg:sticky lg:top-20 lg:self-start">
+          <FormSection title="Money" cols={1} step={4}>
+            <Field label="Price paid to seller" htmlFor="cost">
+              <MoneyInput id="cost" value={cost} onChange={setCost} required />
+            </Field>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Intended selling price" htmlFor="asking">
+                <MoneyInput id="asking" value={askingPrice} onChange={setAskingPrice} />
+              </Field>
+              <Field label="Paid by" htmlFor="method">
+                <SelectField
+                  id="method"
+                  value={form.payment_method}
+                  onChange={(payment_method) => setForm({ ...form, payment_method })}
+                  options={PAYMENT_METHODS}
+                />
+              </Field>
+            </div>
+
+            <dl className="rounded-md bg-surface p-2.5 text-xs space-y-1">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Buying at</dt>
+                <dd className="font-extrabold tabular-nums">{money(costPence)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Target resale</dt>
+                <dd className="font-extrabold tabular-nums">
+                  {askingPence ? money(askingPence) : "—"}
+                </dd>
+              </div>
+              <div className="flex justify-between border-t border-admin-border pt-1">
+                <dt className="text-muted-foreground">Expected profit</dt>
+                <dd
+                  className={
+                    expectedProfit > 0
+                      ? "font-extrabold tabular-nums text-emerald-600"
+                      : "font-extrabold tabular-nums"
+                  }
+                >
+                  {askingPence ? money(expectedProfit) : "—"}
+                  {askingPence > 0 ? ` (${marginPct.toFixed(0)}%)` : ""}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="pt-1.5 space-y-2">
+              <Button
+                type="button"
+                className="w-full h-10 text-sm font-extrabold shadow-soft"
+                disabled={disabled}
+                onClick={() => submit(true)}
+              >
+                <Printer className="mr-2 size-4" /> Save &amp; print (F2)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-8 text-xs font-semibold"
+                disabled={disabled}
+                onClick={() => submit(false)}
+              >
+                {save.isPending ? (
+                  <Loader2 className="mr-2 size-3.5 animate-spin" />
+                ) : (
+                  <Save className="mr-2 size-3.5" />
+                )}
+                Save (Ctrl+Enter)
+              </Button>
+            </div>
+          </FormSection>
+        </div>
       </div>
 
-      <ActionBar
-        summary={
-          <>
-            <SummaryFigure label="Buying" value={money(costPence)} />
-            <SummaryFigure
-              label="Intended selling"
-              value={askingPence ? money(askingPence) : "—"}
-              tone="muted"
-            />
-            <SummaryFigure
-              label="Expected gross profit"
-              value={askingPence ? money(expectedProfit) : "—"}
-              tone={
-                !askingPence ? "muted" : expectedProfit > 0 ? "good" : "primary"
-              }
-            />
-            <SummaryFigure
-              label="Margin"
-              value={askingPence ? `${marginPct.toFixed(1)}%` : "—"}
-              tone={
-                !askingPence
-                  ? "muted"
-                  : marginPct >= 15
-                    ? "good"
-                    : marginPct > 0
-                      ? "warn"
-                      : "primary"
-              }
-            />
-          </>
-        }
-        hint={
-          <>
-            <span>
-              <Kbd>F2</Kbd> save &amp; print
-            </span>
-            <span>
-              <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> save
-            </span>
-            <span>Preview only — server totals are authoritative.</span>
-          </>
-        }
-      >
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          onClick={() => submit(false)}
+      <div className="lg:hidden">
+        <ActionBar
+          summary={
+            <>
+              <SummaryFigure label="Buying" value={money(costPence)} />
+              <SummaryFigure
+                label="Intended selling"
+                value={askingPence ? money(askingPence) : "—"}
+                tone="muted"
+              />
+              <SummaryFigure
+                label="Expected gross profit"
+                value={askingPence ? money(expectedProfit) : "—"}
+                tone={
+                  !askingPence ? "muted" : expectedProfit > 0 ? "good" : "primary"
+                }
+              />
+              <SummaryFigure
+                label="Margin"
+                value={askingPence ? `${marginPct.toFixed(1)}%` : "—"}
+                tone={
+                  !askingPence
+                    ? "muted"
+                    : marginPct >= 15
+                      ? "good"
+                      : marginPct > 0
+                        ? "warn"
+                        : "primary"
+                }
+              />
+            </>
+          }
+          hint={
+            <>
+              <span>
+                <Kbd>F2</Kbd> save &amp; print
+              </span>
+              <span>
+                <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> save
+              </span>
+            </>
+          }
         >
-          {save.isPending ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 size-4" />
-          )}
-          Save
-        </Button>
-        <Button type="submit" disabled={disabled}>
-          <Printer className="mr-2 size-4" /> Save &amp; print
-        </Button>
-      </ActionBar>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            onClick={() => submit(false)}
+          >
+            {save.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 size-4" />
+            )}
+            Save
+          </Button>
+          <Button type="button" disabled={disabled} onClick={() => submit(true)}>
+            <Printer className="mr-2 size-4" /> Save &amp; print
+          </Button>
+        </ActionBar>
+      </div>
     </form>
   );
 }

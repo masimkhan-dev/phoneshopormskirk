@@ -193,7 +193,7 @@ export function localBusinessSchema(b: BusinessSettings | null | undefined) {
       addressCountry: "GB",
     },
     telephone: b?.phone ?? undefined,
-    email: b?.email ?? undefined,
+    email: b?.email || "tefflakki188@gmail.com",
     areaServed: "Ormskirk, Lancashire",
     ...(b?.latitude && b?.longitude
       ? { geo: { "@type": "GeoCoordinates", latitude: b.latitude, longitude: b.longitude } }

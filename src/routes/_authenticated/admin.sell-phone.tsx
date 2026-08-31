@@ -85,7 +85,7 @@ function SellPhone() {
           p: {
             client_ref: clientRef.current,
             stock_item_id: item?.id,
-            customer,
+            customer: customer?.name?.trim() || customer?.phone?.trim() ? customer : undefined,
             selling_price_pence: totals.subtotal,
             discount_pence: totals.disc,
             amount_paid_pence: totals.amountPaid,
@@ -126,17 +126,18 @@ function SellPhone() {
   const submit = useCallback(
     (print: boolean) => {
       if (save.isPending) return;
+      const phoneDigits = (customer?.phone ?? "").replace(/\D/g, "");
+      if (phoneDigits.length > 0 && phoneDigits.length !== 11) {
+        toast.error("Enter a complete 11-digit UK phone number or leave this field blank.");
+        return;
+      }
       if (disabled) {
         toast.error("Please choose a phone and enter a price.");
         return;
       }
-      if (terms.acknowledgementMissing) {
-        toast.error("Please tick the customer acknowledgement in Terms & warranty.");
-        return;
-      }
       save.mutate(print);
     },
-    [disabled, save, terms.acknowledgementMissing],
+    [customer?.phone, disabled, save],
   );
 
   useHotkeys(
@@ -154,43 +155,37 @@ function SellPhone() {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        submit(true);
       }}
     >
-      <PageHeader
-        compact
-        title="Sell a phone"
-        description="Pick the handset from stock, add the buyer, take payment."
-      />
+      <PageHeader compact title="Sell a phone" description="Handset from stock, price, buyer." />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-3">
-          <FormSection title="Phone from stock" cols={1} step={1}>
+        <div className="space-y-2.5">
+          <FormSection title="Handset from stock" cols={1} step={1}>
             {item ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-surface p-2.5">
+              <div className="flex items-center justify-between gap-3 rounded-md border border-admin-border bg-surface px-3 py-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-extrabold">
-                    {[item.brand, item.model].filter(Boolean).join(" ")}
+                  <p className="truncate text-sm font-bold">
+                    {[item.brand, item.model, item.storage, item.colour].filter(Boolean).join(" ")}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {[item.sku, item.storage, item.colour, item.condition, item.imei]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                  <p className="mt-0.5 text-xs font-semibold">
-                    Cost {money(item.purchase_cost_pence)}
-                    {item.selling_price_pence
-                      ? ` · Asking ${money(item.selling_price_pence)}`
-                      : ""}
+                    IMEI: {item.imei}
+                    {item.condition ? ` · ${item.condition}` : ""}
+                    {item.battery_health ? ` · ${item.battery_health}` : ""} · Cost:{" "}
+                    {money(item.purchase_cost_pence)}
                   </p>
                 </div>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => setItem(null)}
+                  onClick={() => {
+                    setItem(null);
+                    setPrice("");
+                  }}
+                  aria-label="Change phone"
                 >
-                  Change
+                  <X className="size-4" />
                 </Button>
               </div>
             ) : (
@@ -199,42 +194,29 @@ function SellPhone() {
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     ref={searchRef}
-                    className="h-9 pl-9 pr-9"
+                    className="h-9 pl-9"
+                    placeholder="Search available stock by model, brand or IMEI (/)"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search stock by IMEI, SKU, brand or model"
-                    aria-label="Search stock"
                   />
-                  {search && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      aria-label="Clear search"
-                      className="absolute right-1 top-1/2 size-7 -translate-y-1/2 text-muted-foreground"
-                      onClick={() => setSearch("")}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
                 </div>
-                <div className="max-h-56 divide-y divide-admin-border overflow-y-auto rounded-md border border-admin-border">
+                <div className="max-h-48 divide-y divide-admin-border overflow-y-auto rounded-md border border-admin-border scrollbar-hidden">
                   {results.length ? (
                     results.map((s) => (
                       <button
                         key={s.id}
                         type="button"
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-surface"
                         onClick={() => pick(s)}
-                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-surface"
                       >
                         <span className="min-w-0">
-                          <span className="block truncate font-bold">
-                            {[s.brand, s.model].filter(Boolean).join(" ")}
+                          <span className="block truncate text-sm font-bold">
+                            {[s.brand, s.model, s.storage, s.colour].filter(Boolean).join(" ")}
                           </span>
                           <span className="block truncate text-xs text-muted-foreground">
-                            {[s.sku, s.storage, s.condition, s.imei]
-                              .filter(Boolean)
-                              .join(" · ")}
+                            IMEI: {s.imei}
+                            {s.condition ? ` · ${s.condition}` : ""}
+                            {s.battery_health ? ` · ${s.battery_health}` : ""}
                           </span>
                         </span>
                         <span className="shrink-0 text-sm font-extrabold tabular-nums">
@@ -269,110 +251,143 @@ function SellPhone() {
           </MoreDetails>
         </div>
 
-        <FormSection
-          title="Price and payment"
-          cols={1}
-          step={3}
-          className="lg:sticky lg:top-32 lg:self-start"
-        >
-          <Field label="Selling price" htmlFor="price">
-            <MoneyInput id="price" value={price} onChange={setPrice} required />
-          </Field>
-          <Field label="Discount" htmlFor="discount">
-            <MoneyInput id="discount" value={discount} onChange={setDiscount} />
-          </Field>
-          <Field label="Amount paid now" htmlFor="paid">
-            <MoneyInput id="paid" value={paid} onChange={setPaid} />
-          </Field>
-          <Field label="Payment method" htmlFor="method">
-            <SelectField
-              id="method"
-              value={method}
-              onChange={setMethod}
-              options={PAYMENT_METHODS}
-            />
-          </Field>
-          <dl className="rounded-md bg-surface p-2.5 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Total</dt>
-              <dd className="font-extrabold tabular-nums">{money(totals.total)}</dd>
+        <div className="space-y-2.5 lg:sticky lg:top-20 lg:self-start">
+          <FormSection
+            title="Price and payment"
+            cols={1}
+            step={3}
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Selling price" htmlFor="price">
+                <MoneyInput id="price" value={price} onChange={setPrice} required />
+              </Field>
+              <Field label="Discount" htmlFor="discount">
+                <MoneyInput id="discount" value={discount} onChange={setDiscount} />
+              </Field>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Paid</dt>
-              <dd className="font-extrabold tabular-nums">{money(totals.amountPaid)}</dd>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Amount paid" htmlFor="paid">
+                <MoneyInput id="paid" value={paid} onChange={setPaid} />
+              </Field>
+              <Field label="Payment method" htmlFor="method">
+                <SelectField
+                  id="method"
+                  value={method}
+                  onChange={setMethod}
+                  options={PAYMENT_METHODS}
+                />
+              </Field>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">
-                {totals.change > 0 ? "Change due" : "Balance"}
-              </dt>
-              <dd
-                className={
-                  totals.change > 0
-                    ? "font-extrabold tabular-nums text-emerald-600"
-                    : "font-extrabold tabular-nums text-primary"
-                }
+
+            <dl className="rounded-md bg-surface p-2.5 text-xs space-y-1">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Total</dt>
+                <dd className="font-extrabold tabular-nums">{money(totals.total)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Paid</dt>
+                <dd className="font-extrabold tabular-nums">{money(totals.amountPaid)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">
+                  {totals.change > 0 ? "Change due" : "Balance"}
+                </dt>
+                <dd
+                  className={
+                    totals.change > 0
+                      ? "font-extrabold tabular-nums text-emerald-600"
+                      : "font-extrabold tabular-nums text-primary"
+                  }
+                >
+                  {money(totals.change > 0 ? totals.change : totals.balance)}
+                </dd>
+              </div>
+              <div className="flex justify-between border-t border-admin-border pt-1">
+                <dt className="text-muted-foreground">Gross profit</dt>
+                <dd className="font-extrabold tabular-nums">{item ? money(margin) : "—"}</dd>
+              </div>
+            </dl>
+
+            <div className="pt-1.5 space-y-2">
+              <Button
+                type="button"
+                className="w-full h-10 text-sm font-extrabold shadow-soft"
+                disabled={disabled}
+                onClick={() => submit(true)}
               >
-                {money(totals.change > 0 ? totals.change : totals.balance)}
-              </dd>
+                <Printer className="mr-2 size-4" /> Save &amp; print (F2)
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-8 text-xs font-semibold"
+                disabled={disabled}
+                onClick={() => submit(false)}
+              >
+                {save.isPending ? (
+                  <Loader2 className="mr-2 size-3.5 animate-spin" />
+                ) : (
+                  <Save className="mr-2 size-3.5" />
+                )}
+                Save (Ctrl+Enter)
+              </Button>
             </div>
-            <div className="flex justify-between border-t border-admin-border pt-1">
-              <dt className="text-muted-foreground">Gross profit</dt>
-              <dd className="font-extrabold tabular-nums">{item ? money(margin) : "—"}</dd>
-            </div>
-          </dl>
-        </FormSection>
+          </FormSection>
+        </div>
       </div>
 
-      <ActionBar
-        summary={
-          <>
-            <SummaryFigure label="Subtotal" value={money(totals.subtotal)} tone="muted" />
-            <SummaryFigure label="Discount" value={money(totals.disc)} tone="muted" />
-            <SummaryFigure label="Total" value={money(totals.total)} />
-            <SummaryFigure label="Paid" value={money(totals.amountPaid)} />
-            {totals.change > 0 ? (
-              <SummaryFigure label="Change due" value={money(totals.change)} tone="good" />
-            ) : (
-              <SummaryFigure label="Balance" value={money(totals.balance)} tone="primary" />
-            )}
-            <SummaryFigure
-              label="Gross profit"
-              value={item ? money(margin) : "—"}
-              tone={!item ? "muted" : margin > 0 ? "good" : "primary"}
-            />
-          </>
-        }
-        hint={
-          <>
-            <span>
-              <Kbd>/</Kbd> search stock
-            </span>
-            <span>
-              <Kbd>F2</Kbd> save &amp; print
-            </span>
-            <span>
-              <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> save
-            </span>
-          </>
-        }
-      >
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          onClick={() => submit(false)}
+      <div className="lg:hidden">
+        <ActionBar
+          summary={
+            <>
+              <SummaryFigure label="Subtotal" value={money(totals.subtotal)} tone="muted" />
+              <SummaryFigure label="Discount" value={money(totals.disc)} tone="muted" />
+              <SummaryFigure label="Total" value={money(totals.total)} />
+              <SummaryFigure label="Paid" value={money(totals.amountPaid)} />
+              {totals.change > 0 ? (
+                <SummaryFigure label="Change due" value={money(totals.change)} tone="good" />
+              ) : (
+                <SummaryFigure label="Balance" value={money(totals.balance)} tone="primary" />
+              )}
+              <SummaryFigure
+                label="Gross profit"
+                value={item ? money(margin) : "—"}
+                tone={!item ? "muted" : margin > 0 ? "good" : "primary"}
+              />
+            </>
+          }
+          hint={
+            <>
+              <span>
+                <Kbd>/</Kbd> search stock
+              </span>
+              <span>
+                <Kbd>F2</Kbd> save &amp; print
+              </span>
+              <span>
+                <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> save
+              </span>
+            </>
+          }
         >
-          {save.isPending ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 size-4" />
-          )}
-          Save
-        </Button>
-        <Button type="submit" disabled={disabled}>
-          <Printer className="mr-2 size-4" /> Save &amp; print
-        </Button>
-      </ActionBar>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            onClick={() => submit(false)}
+          >
+            {save.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 size-4" />
+            )}
+            Save
+          </Button>
+          <Button type="button" disabled={disabled} onClick={() => submit(true)}>
+            <Printer className="mr-2 size-4" /> Save &amp; print
+          </Button>
+        </ActionBar>
+      </div>
     </form>
   );
 }

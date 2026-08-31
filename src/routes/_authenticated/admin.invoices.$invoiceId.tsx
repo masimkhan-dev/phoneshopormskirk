@@ -65,6 +65,8 @@ function InvoiceDetail() {
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("CASH");
   const [tendered, setTendered] = useState("");
+  const [payRef, setPayRef] = useState("");
+  const [payNotes, setPayNotes] = useState("");
   const [voidOpen, setVoidOpen] = useState(false);
   const [format, setFormat] = useState<PrintFormat>("a4");
   const [reason, setReason] = useState("");
@@ -93,12 +95,16 @@ function InvoiceDetail() {
           invoice_id: invoiceId,
           amount_pence: poundsToPence(amount),
           method,
+          reference: payRef.trim() || null,
+          notes: payNotes.trim() || null,
         },
       }),
     onSuccess: () => {
       toast.success("Payment recorded successfully.");
       setPayOpen(false);
       setAmount("");
+      setPayRef("");
+      setPayNotes("");
       refresh();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -141,6 +147,8 @@ function InvoiceDetail() {
     if (!inv || inv.status !== "FINAL" || inv.balance_pence <= 0) return;
     setAmount(penceToPounds(inv.balance_pence));
     setTendered("");
+    setPayRef("");
+    setPayNotes("");
     setPayOpen(true);
   }, [data]);
 
@@ -360,17 +368,37 @@ function InvoiceDetail() {
             </Field>
           </FieldGrid>
         )}
-        <MoreDetails cols={1} label="Invoice breakdown">
-          <dl className="space-y-1 rounded-md bg-surface p-3 text-sm">
-            <SummaryRow label="Invoice total" value={money(invoice.total_pence)} />
-            <SummaryRow label="Already paid" value={money(invoice.amount_paid_pence)} />
-            <SummaryRow label="This payment" value={money(amountPence)} />
-            <SummaryRow
-              label="Remaining after payment"
-              value={money(Math.max(invoice.balance_pence - amountPence, 0))}
-              strong
+        <MoreDetails cols={2} label="More options (reference, note, breakdown)">
+          <Field label="Reference (optional)" htmlFor="pay-ref">
+            <Input
+              id="pay-ref"
+              className="h-9"
+              value={payRef}
+              onChange={(e) => setPayRef(e.target.value)}
+              placeholder="e.g. Card auth code / transfer ref"
             />
-          </dl>
+          </Field>
+          <Field label="Note (optional)" htmlFor="pay-note">
+            <Input
+              id="pay-note"
+              className="h-9"
+              value={payNotes}
+              onChange={(e) => setPayNotes(e.target.value)}
+              placeholder="e.g. Part payment at collection"
+            />
+          </Field>
+          <div className="sm:col-span-2">
+            <dl className="space-y-1 rounded-md bg-surface p-3 text-sm">
+              <SummaryRow label="Invoice total" value={money(invoice.total_pence)} />
+              <SummaryRow label="Already paid" value={money(invoice.amount_paid_pence)} />
+              <SummaryRow label="This payment" value={money(amountPence)} />
+              <SummaryRow
+                label="Remaining after payment"
+                value={money(Math.max(invoice.balance_pence - amountPence, 0))}
+                strong
+              />
+            </dl>
+          </div>
         </MoreDetails>
         <p className="text-xs text-muted-foreground">
           <Kbd>F2</Kbd> opens this dialog · <Kbd>Enter</Kbd> records the payment
