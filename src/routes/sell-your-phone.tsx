@@ -42,7 +42,7 @@ function SellPage() {
             <p className="mt-5 max-w-xl text-lg text-on-brand/85">
               Working, cracked, water damaged or not powering on — we'll value it, and there's no
               obligation to sell. Send the model, storage and condition on WhatsApp for an estimate
-              before you travel, or bring it in to 4 Aughton St.
+              before you travel, or bring it in to 4 Aughton St (exactly opposite Costa Coffee).
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -158,7 +158,7 @@ function SellPage() {
             </Link>{" "}
             or{" "}
             <Link to="/contact" className="font-bold text-primary underline underline-offset-4">
-              come and see us at 4 Aughton St
+              come and see us at 4 Aughton St (exactly opposite Costa Coffee)
             </Link>
             .
           </p>

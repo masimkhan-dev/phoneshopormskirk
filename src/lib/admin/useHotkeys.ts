@@ -20,6 +20,7 @@ function isTyping(target: EventTarget | null): boolean {
 }
 
 function candidates(event: KeyboardEvent): string[] {
+  if (!event || typeof event.key !== "string") return [];
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
   const list: string[] = [];
   if (event.ctrlKey || event.metaKey) list.push(`mod+${key}`);

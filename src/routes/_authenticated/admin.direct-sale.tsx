@@ -63,8 +63,14 @@ function DirectSale() {
   const [lines, setLines] = useState<Line[]>([]);
   const [customer, setCustomer] = useState<CustomerDraft | null>(null);
   const [discount, setDiscount] = useState("");
+  const [isStudent, setIsStudent] = useState(false);
   const [paid, setPaid] = useState("");
   const [method, setMethod] = useState("CASH");
+  const [isSplit, setIsSplit] = useState(false);
+  const [splits, setSplits] = useState<Array<{ id: string; method: string; amount: string }>>([
+    { id: "1", method: "CASH", amount: "" },
+    { id: "2", method: "CARD", amount: "" },
+  ]);
   const [basketOpen, setBasketOpen] = useState(false);
 
   // Warranty configuration
@@ -88,8 +94,25 @@ function DirectSale() {
     const subtotal = lines.reduce((sum, l) => sum + poundsToPence(l.price) * l.quantity, 0);
     const disc = Math.min(Math.max(poundsToPence(discount), 0), subtotal);
     const total = subtotal - disc;
-    const received = Math.max(poundsToPence(paid), 0);
+    const splitSum = splits.reduce(
+      (sum, s) => sum + Math.max(poundsToPence(s.amount), 0),
+      0,
+    );
+    const received = isSplit ? splitSum : Math.max(poundsToPence(paid), 0);
     const amountPaid = Math.min(received, total);
+
+    const cashSplitAmt = isSplit
+      ? splits
+          .filter((s) => s.method === "CASH")
+          .reduce((sum, s) => sum + Math.max(poundsToPence(s.amount), 0), 0)
+      : method === "CASH"
+        ? received
+        : 0;
+    const nonCashSplitAmt = isSplit ? splitSum - cashSplitAmt : 0;
+    const effectiveCashNeeded = Math.max(total - nonCashSplitAmt, 0);
+    const change =
+      cashSplitAmt > effectiveCashNeeded ? cashSplitAmt - effectiveCashNeeded : 0;
+
     return {
       subtotal,
       disc,
@@ -97,10 +120,19 @@ function DirectSale() {
       received,
       amountPaid,
       balance: total - amountPaid,
-      change: method === "CASH" ? Math.max(received - total, 0) : 0,
+      change,
       items: lines.reduce((n, l) => n + l.quantity, 0),
     };
-  }, [lines, discount, paid, method]);
+  }, [lines, discount, paid, method, isSplit, splits]);
+
+  // Auto-apply 10% student discount if student radio is selected
+  useEffect(() => {
+    if (isStudent) {
+      const subtotal = lines.reduce((sum, l) => sum + poundsToPence(l.price) * l.quantity, 0);
+      const studentDiscPence = Math.round(subtotal * 0.10);
+      setDiscount(studentDiscPence > 0 ? penceToPounds(studentDiscPence) : "");
+    }
+  }, [lines, isStudent]);
 
   // Auto-prefill paid = total whenever the total changes.
   useEffect(() => {
@@ -226,8 +258,16 @@ function DirectSale() {
               unit_price_pence: poundsToPence(l.price),
             })),
             discount_pence: totals.disc,
-            amount_paid_pence: totals.amountPaid,
-            payment_method: method,
+            split_payments: isSplit
+              ? splits
+                  .map((s) => ({
+                    amount_pence: poundsToPence(s.amount),
+                    method: s.method,
+                  }))
+                  .filter((s) => s.amount_pence > 0)
+              : undefined,
+            amount_paid_pence: !isSplit ? totals.amountPaid : undefined,
+            payment_method: !isSplit ? method : undefined,
             terms: termsPayload,
           },
         },
@@ -283,9 +323,9 @@ function DirectSale() {
   );
 
   const checkoutPanel = (
-    <div className="flex h-full flex-col justify-between gap-2">
+    <div className="flex h-full flex-col gap-2 min-h-0 overflow-y-auto scrollbar-hidden">
       {/* Zone A: Scrollable Basket */}
-      <div className="flex min-h-[130px] flex-1 flex-col overflow-hidden rounded-md border border-admin-border bg-card">
+      <div className="flex min-h-[90px] flex-1 flex-col overflow-hidden rounded-md border border-admin-border bg-card">
         {/* 44px Basket Header */}
         <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-admin-border px-3">
           <div className="flex items-center gap-2">
@@ -398,30 +438,191 @@ function DirectSale() {
         </div>
 
         {/* Discount & Payment 3-Column Grid */}
-        <div className="grid grid-cols-3 gap-2 pt-0.5">
-          <Field label="Discount" htmlFor="discount">
-            <MoneyInput
-              id="discount"
-              value={discount}
-              onChange={setDiscount}
-              placeholder="0.00"
-            />
-          </Field>
-          <Field label="Amount paid" htmlFor="paid">
-            <MoneyInput id="paid" value={paid} onChange={setPaid} />
-          </Field>
-          <Field label="Method" htmlFor="method">
-            <SelectField
-              id="method"
-              value={method}
-              onChange={setMethod}
-              options={PAYMENT_METHODS}
-            />
-          </Field>
+        <div className="space-y-1.5 pt-0.5">
+          <div className="flex items-center justify-between text-xs px-0.5">
+            <span className="font-semibold text-muted-foreground">Discount</span>
+            <div className="flex items-center gap-2.5">
+              <label className="flex items-center gap-1 cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground">
+                <input
+                  type="radio"
+                  name="ds-discount-type"
+                  checked={!isStudent}
+                  onChange={() => {
+                    setIsStudent(false);
+                    setDiscount("");
+                  }}
+                  className="accent-primary size-3.5"
+                />
+                <span>Standard</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer text-xs font-bold text-foreground hover:text-primary">
+                <input
+                  type="radio"
+                  name="ds-discount-type"
+                  checked={isStudent}
+                  onChange={() => setIsStudent(true)}
+                  className="accent-primary size-3.5"
+                />
+                <span className="inline-flex items-center gap-1 text-primary">
+                  🎓 Student 10%
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {!isSplit ? (
+            <div>
+              <div className="grid grid-cols-3 gap-2">
+                <Field label={isStudent ? "Discount (10%)" : "Discount (£)"} htmlFor="discount">
+                  <MoneyInput
+                    id="discount"
+                    value={discount}
+                    onChange={(v) => {
+                      setDiscount(v);
+                      if (isStudent) setIsStudent(false);
+                    }}
+                    placeholder="0.00"
+                  />
+                </Field>
+                <Field label="Amount paid" htmlFor="paid">
+                  <MoneyInput id="paid" value={paid} onChange={setPaid} />
+                </Field>
+                <Field label="Method" htmlFor="method">
+                  <SelectField
+                    id="method"
+                    value={method}
+                    onChange={setMethod}
+                    options={PAYMENT_METHODS}
+                  />
+                </Field>
+              </div>
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSplit(true);
+                    const halfPence = Math.floor(totals.total / 2);
+                    const remPence = totals.total - halfPence;
+                    setSplits([
+                      { id: "1", method: "CASH", amount: penceToPounds(halfPence) },
+                      { id: "2", method: "CARD", amount: penceToPounds(remPence) },
+                    ]);
+                  }}
+                  className="text-xs font-bold text-primary hover:underline"
+                >
+                  + Split payment (Cash + Card)
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5 rounded-md border border-admin-border bg-surface p-2 text-xs">
+              <div className="flex items-center justify-between font-bold">
+                <span>Split payments</span>
+                <button
+                  type="button"
+                  onClick={() => setIsSplit(false)}
+                  className="text-[0.7rem] font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Single payment mode
+                </button>
+              </div>
+              <div className="space-y-1.5 pt-1">
+                {splits.map((s) => (
+                  <div key={s.id} className="flex items-center gap-1.5">
+                    <div className="w-1/2">
+                      <SelectField
+                        id={`split-method-${s.id}`}
+                        value={s.method}
+                        onChange={(v) => {
+                          setSplits((prev) =>
+                            prev.map((item) => (item.id === s.id ? { ...item, method: v } : item)),
+                          );
+                        }}
+                        options={PAYMENT_METHODS}
+                      />
+                    </div>
+                    <div className="w-1/2">
+                      <MoneyInput
+                        id={`split-amount-${s.id}`}
+                        value={s.amount}
+                        onChange={(v) => {
+                          setSplits((prev) =>
+                            prev.map((item) => (item.id === s.id ? { ...item, amount: v } : item)),
+                          );
+                        }}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    {splits.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setSplits(splits.filter((x) => x.id !== s.id))}
+                        className="text-xs text-muted-foreground hover:text-destructive px-1"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between pt-1 border-t border-admin-border/50">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSplits([
+                      ...splits,
+                      { id: crypto.randomUUID(), method: "BANK_TRANSFER", amount: "" },
+                    ])
+                  }
+                  className="text-xs font-bold text-primary hover:underline"
+                >
+                  + Add method
+                </button>
+                <span className="text-[0.7rem] font-bold text-muted-foreground">
+                  Sum: {money(splits.reduce((sum, s) => sum + Math.max(poundsToPence(s.amount), 0), 0))} / {money(totals.total)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Warranty Row (Subtle) */}
-        {showWarranty ? (
+        {/* Action Toggles Toolbar: Warranty & Receipt message */}
+        <div className="flex items-center justify-between text-xs pt-1 border-t border-admin-border/50">
+          {!showWarranty ? (
+            <button
+              type="button"
+              onClick={() => {
+                setShowWarranty(true);
+                setWarrantyDays(30);
+              }}
+              className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+            >
+              <span>+ Add warranty</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setShowWarranty(false);
+                setWarrantyDays(0);
+              }}
+              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-destructive"
+            >
+              <span>✓ Warranty ({effectiveWarrantyDays}d) · ✕ Remove</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setShowTermsEditor((v) => !v)}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground hover:underline"
+          >
+            <span>Receipt message {showTermsEditor ? "(Hide)" : "(Edit)"}</span>
+          </button>
+        </div>
+
+        {/* Warranty Configuration Panel */}
+        {showWarranty && (
           <div className="rounded-md border border-admin-border bg-surface p-2 text-xs space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-xs">
@@ -444,12 +645,15 @@ function DirectSale() {
                 id="ds-warranty"
                 value={dayValue}
                 onChange={(v) => {
-                  if (v === "custom") return;
-                  setWarrantyDays(Number(v));
+                  if (v === "custom") {
+                    setWarrantyDays(warrantyDays || 30);
+                  } else {
+                    setWarrantyDays(Number(v));
+                  }
                 }}
                 options={[...WARRANTY_DAY_OPTIONS, { value: "custom", label: "Custom…" }]}
               />
-              {dayValue === "custom" && (
+              {dayValue === "custom" ? (
                 <Input
                   id="ds-custom-days"
                   className="h-9 text-xs"
@@ -465,43 +669,36 @@ function DirectSale() {
                     )
                   }
                 />
+              ) : (
+                <div className="flex items-center text-[0.72rem] text-muted-foreground px-1">
+                  Covers manufacturer defects
+                </div>
               )}
             </div>
           </div>
-        ) : (
-          <div className="flex items-center justify-between text-xs pt-0.5">
-            <button
-              type="button"
-              onClick={() => {
-                setShowWarranty(true);
-                setWarrantyDays(30);
-              }}
-              className="text-xs font-bold text-primary hover:underline"
-            >
-              + Add warranty
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowTermsEditor((v) => !v)}
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-            >
-              Receipt message {showTermsEditor ? "Hide" : "Edit"}
-            </button>
-          </div>
         )}
 
-        {/* Optional Receipt Message */}
+        {/* Optional Receipt Message Editor */}
         {showTermsEditor && (
           <div className="rounded-md border border-admin-border bg-surface p-2 text-xs space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-xs">Receipt message</span>
-              <button
-                type="button"
-                onClick={() => setShowTermsEditor(false)}
-                className="text-xs font-semibold text-muted-foreground"
-              >
-                Hide
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCustomerMessage(DEFAULT_DIRECT_SALE_MESSAGE)}
+                  className="text-[0.7rem] font-semibold text-primary hover:underline"
+                >
+                  Reset default
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsEditor(false)}
+                  className="text-[0.7rem] font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Hide
+                </button>
+              </div>
             </div>
             <Textarea
               id="ds-message"
@@ -710,7 +907,7 @@ function DirectSale() {
         </div>
 
         {/* Right Pane: Checkout & Cart (Desktop Viewport Locked) */}
-        <div className="hidden lg:flex min-h-0 flex-col overflow-hidden">
+        <div className="hidden lg:flex min-h-0 flex-col overflow-y-auto scrollbar-hidden">
           {checkoutPanel}
         </div>
       </div>

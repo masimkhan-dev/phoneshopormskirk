@@ -153,6 +153,7 @@ export function Footer() {
           <address className="mt-4 not-italic text-sm leading-relaxed">
             <span className="block font-bold text-white">Phone Shop Ormskirk</span>
             <span className="block">4 Aughton St, Ormskirk, Lancashire L39 3BW</span>
+            <span className="block text-xs text-white/70">Exactly opposite Costa Coffee</span>
             <span className="block">
               Phone:{" "}
               <a href="tel:+447496499992" className="hover:text-white">

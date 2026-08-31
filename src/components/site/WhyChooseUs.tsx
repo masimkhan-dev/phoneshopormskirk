@@ -23,7 +23,7 @@ export function WhyChooseUs() {
     {
       icon: Store,
       title: "A real shop in Ormskirk town centre",
-      body: "4 Aughton St. You can hand your phone to the person looking at it, ask questions and pick it up in the same place.",
+      body: "Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee. You can hand your phone to the person looking at it, ask questions and pick it up in the same place.",
     },
     {
       icon: Wrench,

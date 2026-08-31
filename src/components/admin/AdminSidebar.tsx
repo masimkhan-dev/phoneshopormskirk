@@ -91,7 +91,11 @@ function usePathname() {
 }
 
 /** Horizontal topbar navigation (desktop). */
-export function AdminTopbarNav() {
+export function AdminTopbarNav({
+  onDropdownOpenChange,
+}: {
+  onDropdownOpenChange?: (open: boolean) => void;
+} = {}) {
   const pathname = usePathname();
 
   return (
@@ -120,7 +124,10 @@ export function AdminTopbarNav() {
         }
 
         return (
-          <DropdownMenu key={group.title}>
+          <DropdownMenu
+            key={group.title}
+            onOpenChange={(open) => onDropdownOpenChange?.(open)}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 type="button"

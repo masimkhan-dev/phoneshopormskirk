@@ -41,6 +41,11 @@ function SellPhone() {
   const [discount, setDiscount] = useState("");
   const [paid, setPaid] = useState("");
   const [method, setMethod] = useState("CASH");
+  const [isSplit, setIsSplit] = useState(false);
+  const [splits, setSplits] = useState<Array<{ id: string; method: string; amount: string }>>([
+    { id: "1", method: "CASH", amount: "" },
+    { id: "2", method: "CARD", amount: "" },
+  ]);
   const [notes, setNotes] = useState("");
 
   const { data: results = [], isFetching } = useQuery({
@@ -52,8 +57,25 @@ function SellPhone() {
     const subtotal = poundsToPence(price);
     const disc = Math.min(poundsToPence(discount), subtotal);
     const total = subtotal - disc;
-    const received = Math.max(poundsToPence(paid), 0);
+    const splitSum = splits.reduce(
+      (sum, s) => sum + Math.max(poundsToPence(s.amount), 0),
+      0,
+    );
+    const received = isSplit ? splitSum : Math.max(poundsToPence(paid), 0);
     const amountPaid = Math.min(received, total);
+
+    const cashSplitAmt = isSplit
+      ? splits
+          .filter((s) => s.method === "CASH")
+          .reduce((sum, s) => sum + Math.max(poundsToPence(s.amount), 0), 0)
+      : method === "CASH"
+        ? received
+        : 0;
+    const nonCashSplitAmt = isSplit ? splitSum - cashSplitAmt : 0;
+    const effectiveCashNeeded = Math.max(total - nonCashSplitAmt, 0);
+    const change =
+      cashSplitAmt > effectiveCashNeeded ? cashSplitAmt - effectiveCashNeeded : 0;
+
     return {
       subtotal,
       disc,
@@ -61,10 +83,9 @@ function SellPhone() {
       received,
       amountPaid,
       balance: total - amountPaid,
-      // Cash change is a preview only; the recorded payment stays capped.
-      change: method === "CASH" ? Math.max(received - total, 0) : 0,
+      change,
     };
-  }, [price, discount, paid, method]);
+  }, [price, discount, paid, method, isSplit, splits]);
 
   // Auto-prefill paid = total whenever the total changes.
   // Staff can manually reduce it for partial payments.
@@ -88,8 +109,16 @@ function SellPhone() {
             customer: customer?.name?.trim() || customer?.phone?.trim() ? customer : undefined,
             selling_price_pence: totals.subtotal,
             discount_pence: totals.disc,
-            amount_paid_pence: totals.amountPaid,
-            payment_method: method,
+            split_payments: isSplit
+              ? splits
+                  .map((s) => ({
+                    amount_pence: poundsToPence(s.amount),
+                    method: s.method,
+                  }))
+                  .filter((s) => s.amount_pence > 0)
+              : undefined,
+            amount_paid_pence: !isSplit ? totals.amountPaid : undefined,
+            payment_method: !isSplit ? method : undefined,
             notes,
             terms: terms.createPayload(),
           },
@@ -265,19 +294,109 @@ function SellPhone() {
                 <MoneyInput id="discount" value={discount} onChange={setDiscount} />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Amount paid" htmlFor="paid">
-                <MoneyInput id="paid" value={paid} onChange={setPaid} />
-              </Field>
-              <Field label="Payment method" htmlFor="method">
-                <SelectField
-                  id="method"
-                  value={method}
-                  onChange={setMethod}
-                  options={PAYMENT_METHODS}
-                />
-              </Field>
-            </div>
+            {!isSplit ? (
+              <div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Amount paid" htmlFor="paid">
+                    <MoneyInput id="paid" value={paid} onChange={setPaid} />
+                  </Field>
+                  <Field label="Payment method" htmlFor="method">
+                    <SelectField
+                      id="method"
+                      value={method}
+                      onChange={setMethod}
+                      options={PAYMENT_METHODS}
+                    />
+                  </Field>
+                </div>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSplit(true);
+                      const halfPence = Math.floor(totals.total / 2);
+                      const remPence = totals.total - halfPence;
+                      setSplits([
+                        { id: "1", method: "CASH", amount: penceToPounds(halfPence) },
+                        { id: "2", method: "CARD", amount: penceToPounds(remPence) },
+                      ]);
+                    }}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    + Split payment (Cash + Card)
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1.5 rounded-md border border-admin-border bg-surface p-2 text-xs">
+                <div className="flex items-center justify-between font-bold">
+                  <span>Split payments</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsSplit(false)}
+                    className="text-[0.7rem] font-semibold text-muted-foreground hover:text-foreground"
+                  >
+                    Single payment mode
+                  </button>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  {splits.map((s) => (
+                    <div key={s.id} className="flex items-center gap-1.5">
+                      <div className="w-1/2">
+                        <SelectField
+                          id={`split-method-${s.id}`}
+                          value={s.method}
+                          onChange={(v) => {
+                            setSplits((prev) =>
+                              prev.map((item) => (item.id === s.id ? { ...item, method: v } : item)),
+                            );
+                          }}
+                          options={PAYMENT_METHODS}
+                        />
+                      </div>
+                      <div className="w-1/2">
+                        <MoneyInput
+                          id={`split-amount-${s.id}`}
+                          value={s.amount}
+                          onChange={(v) => {
+                            setSplits((prev) =>
+                              prev.map((item) => (item.id === s.id ? { ...item, amount: v } : item)),
+                            );
+                          }}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      {splits.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => setSplits(splits.filter((x) => x.id !== s.id))}
+                          className="text-xs text-muted-foreground hover:text-destructive px-1"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-admin-border/50">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSplits([
+                        ...splits,
+                        { id: crypto.randomUUID(), method: "BANK_TRANSFER", amount: "" },
+                      ])
+                    }
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    + Add method
+                  </button>
+                  <span className="text-[0.7rem] font-bold text-muted-foreground">
+                    Sum: {money(splits.reduce((sum, s) => sum + Math.max(poundsToPence(s.amount), 0), 0))} / {money(totals.total)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <dl className="rounded-md bg-surface p-2.5 text-xs space-y-1">
               <div className="flex justify-between">

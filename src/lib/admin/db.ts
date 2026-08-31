@@ -58,6 +58,7 @@ export async function callRpc<T = unknown>(
     | "save_customer"
     | "save_supplier"
     | "save_product"
+    | "add_existing_phone_stock"
     | "update_stock_item"
     | "adjust_product_stock"
     | "set_user_role"

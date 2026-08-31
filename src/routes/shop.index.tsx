@@ -73,7 +73,7 @@ function ShopPage() {
           <p className="mt-5 max-w-2xl text-lg text-on-brand/85">
             Used handsets are checked and tested before they go on the shelf. Stock moves quickly, so
             message us to confirm something is still available — we'll hold it for collection at 4
-            Aughton St.
+            Aughton St (exactly opposite Costa Coffee).
           </p>
 
           <div className="mt-7">

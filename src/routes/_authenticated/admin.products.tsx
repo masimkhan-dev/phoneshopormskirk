@@ -375,12 +375,13 @@ function Products() {
         }
       >
         {form && (() => {
+          const accessoryCategories = categories.filter((c) => {
+            const name = c.name.toLowerCase();
+            return !name.includes("phone") && !name.includes("handset");
+          });
           const selectedCat = categories.find((c) => c.id === form.category_id);
           const catNameLower = (selectedCat?.name ?? "").toLowerCase();
-          const isPhoneCategory =
-            catNameLower.includes("phone") || catNameLower.includes("handset");
           const isTechCategory =
-            isPhoneCategory ||
             catNameLower.includes("tablet") ||
             catNameLower.includes("smartwatch") ||
             catNameLower.includes("watch") ||
@@ -398,9 +399,7 @@ function Products() {
                     autoFocus
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder={
-                      isPhoneCategory ? "e.g. iPhone 15 Pro Max 256GB" : "e.g. 20W USB-C Fast Charger"
-                    }
+                    placeholder="e.g. 20W USB-C Fast Charger"
                   />
                 </Field>
 
@@ -409,12 +408,12 @@ function Products() {
                     id="p-cat"
                     value={form.category_id}
                     onChange={(v) => setForm({ ...form, category_id: v })}
-                    options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                    options={accessoryCategories.map((c) => ({ value: c.id, label: c.name }))}
                     placeholder="Select a product category…"
                   />
                 </Field>
 
-                {/* Category-Aware Brand & Model (Phones, Electronics, Audio, Tablets) */}
+                {/* Category-Aware Brand & Model (Electronics, Audio, Tablets) */}
                 {isTechCategory && (
                   <>
                     <Field label="Brand (optional)" htmlFor="p-brand">
@@ -430,7 +429,7 @@ function Products() {
                         id="p-model"
                         className="h-9"
                         value={form.model}
-                        placeholder="e.g. iPhone 15 Pro"
+                        placeholder="e.g. AirPods Pro 2"
                         onChange={(e) => setForm({ ...form, model: e.target.value })}
                       />
                     </Field>
@@ -493,24 +492,6 @@ function Products() {
                   label="Feature on homepage"
                 />
               </FieldGrid>
-
-              {/* Phone Category Notice */}
-              {isPhoneCategory && (
-                <div className="flex items-start justify-between gap-3 rounded-md border border-admin-border bg-surface p-2.5 text-xs text-muted-foreground">
-                  <div>
-                    <strong className="block text-foreground">Phone Catalogue Item:</strong>
-                    This form creates a quantity-based catalogue/product listing. Physical IMEI-tracked
-                    handsets are purchased and tracked through Buy Phone / Phone Stock.
-                  </div>
-                  <Link
-                    to="/admin/buy-phone"
-                    className="shrink-0 font-bold text-primary hover:underline flex items-center gap-1"
-                    onClick={() => setForm(null)}
-                  >
-                    Go to Buy Phone <ArrowRight className="size-3" />
-                  </Link>
-                </div>
-              )}
 
               {/* Collapsed More Details */}
               <MoreDetails

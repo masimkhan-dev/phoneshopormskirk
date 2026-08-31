@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import {
   CheckTile,
+  ComboBox,
   EmptyState,
   Field,
   FieldGrid,
@@ -16,6 +17,7 @@ import {
   Money,
   PageHeader,
   Section,
+  SelectField,
   StatusBadge,
   SummaryFigure,
   TableShell,
@@ -29,11 +31,34 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { callRpc } from "@/lib/admin/db";
 import { daysInStock, money, penceToPounds, poundsToPence } from "@/lib/admin/money";
+import {
+  BATTERY_OPTIONS,
+  BRANDS,
+  COLOUR_OPTIONS,
+  CONDITION_OPTIONS,
+  NETWORK_OPTIONS,
+  STORAGE_OPTIONS,
+} from "@/lib/admin/options";
 import { stockQuery, type StockFilter, type StockItem } from "@/lib/admin/queries";
 
 export const Route = createFileRoute("/_authenticated/admin/stock")({
   component: Stock,
 });
+
+const blankNewPhone = {
+  brand: "Apple",
+  model: "",
+  imei: "",
+  serial: "",
+  storage: "128GB",
+  colour: "Midnight",
+  network: "Unlocked",
+  condition: "GOOD",
+  battery_health: "90%",
+  cost: "",
+  price: "",
+  notes: "",
+};
 
 function Stock() {
   const queryClient = useQueryClient();
@@ -45,11 +70,17 @@ function Stock() {
     publicOnly: false,
   });
   const { data = [], isLoading } = useQuery(stockQuery(filter));
+
+  // Edit price / visibility
   const [editing, setEditing] = useState<StockItem | null>(null);
   const [price, setPrice] = useState("");
   const [visible, setVisible] = useState(false);
   const [featured, setFeatured] = useState(false);
   const [notes, setNotes] = useState("");
+
+  // Add existing opening phone
+  const [newPhoneOpen, setNewPhoneOpen] = useState(false);
+  const [newPhone, setNewPhone] = useState({ ...blankNewPhone });
 
   function openEdit(item: StockItem) {
     setEditing(item);
@@ -59,7 +90,15 @@ function Stock() {
     setNotes(item.notes ?? "");
   }
 
+  function openAddPhone() {
+    setNewPhone({ ...blankNewPhone });
+    setNewPhoneOpen(true);
+  }
+
   const pricePence = poundsToPence(price);
+  const newPhoneCostPence = poundsToPence(newPhone.cost);
+  const newPhonePricePence = poundsToPence(newPhone.price);
+  const newPhoneMargin = newPhonePricePence - newPhoneCostPence;
 
   const save = useMutation({
     mutationFn: async () =>
@@ -80,17 +119,67 @@ function Stock() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const addExistingPhone = useMutation({
+    mutationFn: async () =>
+      callRpc("add_existing_phone_stock", {
+        p: {
+          brand: newPhone.brand,
+          model: newPhone.model.trim(),
+          imei: newPhone.imei.replace(/[^0-9]/g, ""),
+          serial: newPhone.serial.trim() || null,
+          storage: newPhone.storage,
+          colour: newPhone.colour,
+          network: newPhone.network,
+          condition: newPhone.condition,
+          battery_health: newPhone.battery_health || null,
+          purchase_cost_pence: newPhoneCostPence,
+          selling_price_pence: newPhonePricePence > 0 ? newPhonePricePence : null,
+          notes: newPhone.notes.trim() || null,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Existing handset added to stock successfully.");
+      setNewPhoneOpen(false);
+      setNewPhone({ ...blankNewPhone });
+      queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to add phone stock."),
+  });
+
+  const handleAddPhoneSubmit = () => {
+    if (!newPhone.model.trim()) {
+      toast.error("Please enter a device model.");
+      return;
+    }
+    const cleanImei = newPhone.imei.replace(/[^0-9]/g, "");
+    if (!cleanImei) {
+      toast.error("Please enter a 15-digit IMEI number.");
+      return;
+    }
+    if (cleanImei.length !== 15) {
+      toast.error(`IMEI must be exactly 15 digits (currently ${cleanImei.length}).`);
+      return;
+    }
+
+    addExistingPhone.mutate();
+  };
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Phone stock"
         description="Every handset is tracked individually with its cost, price and margin."
         actions={
-          <Button asChild>
-            <Link to="/admin/buy-phone">
-              <Plus className="mr-2 size-4" /> Buy phone
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={openAddPhone}>
+              <Plus className="mr-2 size-4" /> Add existing phone
+            </Button>
+            <Button asChild>
+              <Link to="/admin/buy-phone">
+                <Plus className="mr-2 size-4" /> Buy phone
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -217,6 +306,7 @@ function Stock() {
         )}
       </Section>
 
+      {/* Edit Phone Price & Visibility */}
       <FormDialog
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
@@ -271,6 +361,167 @@ function Stock() {
         </MoreDetails>
       </FormDialog>
 
+      {/* Add Existing Phone Dialog (Opening Inventory) */}
+      <FormDialog
+        open={newPhoneOpen}
+        onOpenChange={(o) => !o && setNewPhoneOpen(false)}
+        title="Add existing phone"
+        description="Record an already-owned handset into phone stock. Does not create a purchase invoice or seller payment."
+        footer={
+          <>
+            <span className="mr-auto flex items-center gap-3 text-sm font-bold">
+              {newPhonePricePence > 0 ? (
+                <>
+                  <SummaryFigure label="Cost" value={money(newPhoneCostPence)} />
+                  <SummaryFigure
+                    label="Margin"
+                    value={money(newPhoneMargin)}
+                    tone={newPhoneMargin >= 0 ? "good" : "warn"}
+                  />
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground">Enter prices for margin preview</span>
+              )}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => setNewPhoneOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleAddPhoneSubmit}
+              disabled={addExistingPhone.isPending || !newPhone.model.trim()}
+            >
+              {addExistingPhone.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Save to stock
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <FieldGrid cols={2}>
+            <Field label="Brand" htmlFor="np-brand">
+              <ComboBox
+                id="np-brand"
+                value={newPhone.brand}
+                onChange={(v) => setNewPhone({ ...newPhone, brand: v })}
+                options={BRANDS}
+              />
+            </Field>
+
+            <Field label="Model" htmlFor="np-model">
+              <Input
+                id="np-model"
+                className="h-9"
+                autoFocus
+                value={newPhone.model}
+                onChange={(e) => setNewPhone({ ...newPhone, model: e.target.value })}
+                placeholder="e.g. iPhone 13 128GB"
+              />
+            </Field>
+
+            <Field label="IMEI (15 digits)" htmlFor="np-imei" hint="Must be unique to this handset">
+              <Input
+                id="np-imei"
+                className="h-9 font-mono"
+                maxLength={15}
+                inputMode="numeric"
+                value={newPhone.imei}
+                onChange={(e) =>
+                  setNewPhone({
+                    ...newPhone,
+                    imei: e.target.value.replace(/[^0-9]/g, "").slice(0, 15),
+                  })
+                }
+                placeholder="354892091234567"
+              />
+            </Field>
+
+            <Field label="Storage" htmlFor="np-storage">
+              <SelectField
+                id="np-storage"
+                value={newPhone.storage}
+                onChange={(v) => setNewPhone({ ...newPhone, storage: v })}
+                options={STORAGE_OPTIONS.map((s) => ({ value: s, label: s }))}
+              />
+            </Field>
+
+            <Field label="Colour" htmlFor="np-colour">
+              <SelectField
+                id="np-colour"
+                value={newPhone.colour}
+                onChange={(v) => setNewPhone({ ...newPhone, colour: v })}
+                options={COLOUR_OPTIONS.map((c) => ({ value: c, label: c }))}
+              />
+            </Field>
+
+            <Field label="Network" htmlFor="np-network">
+              <SelectField
+                id="np-network"
+                value={newPhone.network}
+                onChange={(v) => setNewPhone({ ...newPhone, network: v })}
+                options={NETWORK_OPTIONS.map((n) => ({ value: n, label: n }))}
+              />
+            </Field>
+
+            <Field label="Condition" htmlFor="np-cond">
+              <SelectField
+                id="np-cond"
+                value={newPhone.condition}
+                onChange={(v) => setNewPhone({ ...newPhone, condition: v })}
+                options={CONDITION_OPTIONS}
+              />
+            </Field>
+
+            <Field label="Battery health (optional)" htmlFor="np-battery">
+              <SelectField
+                id="np-battery"
+                value={newPhone.battery_health}
+                onChange={(v) => setNewPhone({ ...newPhone, battery_health: v })}
+                options={BATTERY_OPTIONS.map((b) => ({ value: b, label: b }))}
+              />
+            </Field>
+
+            <Field label="Purchase / Cost price (£)" htmlFor="np-cost">
+              <MoneyInput
+                id="np-cost"
+                value={newPhone.cost}
+                onChange={(v) => setNewPhone({ ...newPhone, cost: v })}
+                placeholder="0.00"
+              />
+            </Field>
+
+            <Field label="Selling price (£)" htmlFor="np-price">
+              <MoneyInput
+                id="np-price"
+                value={newPhone.price}
+                onChange={(v) => setNewPhone({ ...newPhone, price: v })}
+                placeholder="0.00"
+              />
+            </Field>
+          </FieldGrid>
+
+          <MoreDetails cols={1} label="More details (serial number, notes)">
+            <Field label="Serial number (optional)" htmlFor="np-serial">
+              <Input
+                id="np-serial"
+                className="h-9 font-mono"
+                value={newPhone.serial}
+                onChange={(e) => setNewPhone({ ...newPhone, serial: e.target.value })}
+                placeholder="e.g. F2LL89…"
+              />
+            </Field>
+            <Field label="Notes" htmlFor="np-notes">
+              <Textarea
+                id="np-notes"
+                rows={2}
+                value={newPhone.notes}
+                onChange={(e) => setNewPhone({ ...newPhone, notes: e.target.value })}
+                placeholder="e.g. Clean handset with original box"
+              />
+            </Field>
+          </MoreDetails>
+        </div>
+      </FormDialog>
     </div>
   );
 }

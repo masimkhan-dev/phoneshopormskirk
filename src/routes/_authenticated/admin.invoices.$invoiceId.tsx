@@ -67,6 +67,11 @@ function InvoiceDetail() {
   const [tendered, setTendered] = useState("");
   const [payRef, setPayRef] = useState("");
   const [payNotes, setPayNotes] = useState("");
+  const [isSplit, setIsSplit] = useState(false);
+  const [splits, setSplits] = useState<Array<{ id: string; method: string; amount: string; ref: string }>>([
+    { id: "1", method: "CASH", amount: "", ref: "" },
+    { id: "2", method: "CARD", amount: "", ref: "" },
+  ]);
   const [voidOpen, setVoidOpen] = useState(false);
   const [format, setFormat] = useState<PrintFormat>("a4");
   const [reason, setReason] = useState("");
@@ -93,9 +98,18 @@ function InvoiceDetail() {
         p: {
           client_ref: newClientRef(),
           invoice_id: invoiceId,
-          amount_pence: poundsToPence(amount),
-          method,
-          reference: payRef.trim() || null,
+          split_payments: isSplit
+            ? splits
+                .map((s) => ({
+                  amount_pence: poundsToPence(s.amount),
+                  method: s.method,
+                  reference: s.ref.trim() || null,
+                }))
+                .filter((s) => s.amount_pence > 0)
+            : undefined,
+          amount_pence: !isSplit ? poundsToPence(amount) : undefined,
+          method: !isSplit ? method : undefined,
+          reference: !isSplit ? payRef.trim() || null : undefined,
           notes: payNotes.trim() || null,
         },
       }),
@@ -105,6 +119,7 @@ function InvoiceDetail() {
       setAmount("");
       setPayRef("");
       setPayNotes("");
+      setIsSplit(false);
       refresh();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -168,12 +183,19 @@ function InvoiceDetail() {
 
   const { invoice, items, payments } = data;
 
-  const amountPence = poundsToPence(amount);
-  const overpaying = amountPence > invoice.balance_pence;
+  const splitSumPence = splits.reduce(
+    (sum, s) => sum + Math.max(poundsToPence(s.amount), 0),
+    0,
+  );
+  const effectiveAmountPence = isSplit ? splitSumPence : poundsToPence(amount);
+  const overpaying = effectiveAmountPence > invoice.balance_pence;
   const tenderedPence = poundsToPence(tendered);
   const changePence =
-    method === "CASH" && tenderedPence > 0 ? Math.max(tenderedPence - amountPence, 0) : 0;
-  const shortTender = method === "CASH" && tenderedPence > 0 && tenderedPence < amountPence;
+    !isSplit && method === "CASH" && tenderedPence > 0
+      ? Math.max(tenderedPence - effectiveAmountPence, 0)
+      : 0;
+  const shortTender =
+    !isSplit && method === "CASH" && tenderedPence > 0 && tenderedPence < effectiveAmountPence;
 
   return (
     <div className="space-y-5">
@@ -261,10 +283,10 @@ function InvoiceDetail() {
         footer={
           <>
             <span className="mr-auto flex items-center gap-3">
-              <SummaryFigure label="This payment" value={money(amountPence)} />
+              <SummaryFigure label="This payment" value={money(effectiveAmountPence)} />
               <SummaryFigure
                 label="Remaining"
-                value={money(Math.max(invoice.balance_pence - amountPence, 0))}
+                value={money(Math.max(invoice.balance_pence - effectiveAmountPence, 0))}
                 tone="primary"
               />
               {changePence > 0 && (
@@ -277,7 +299,7 @@ function InvoiceDetail() {
             <Button
               size="sm"
               onClick={() => takePayment.mutate()}
-              disabled={takePayment.isPending || amountPence <= 0 || overpaying}
+              disabled={takePayment.isPending || effectiveAmountPence <= 0 || overpaying}
             >
               {takePayment.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
               Record payment
@@ -285,88 +307,204 @@ function InvoiceDetail() {
           </>
         }
       >
-        <FieldGrid cols={2}>
-          <Field
-            label="Amount"
-            htmlFor="amount"
-            hint={
-              overpaying ? "" : `Leave as ${money(invoice.balance_pence)} to settle in full.`
-            }
-          >
-            <Input
-              id="amount"
-              className="h-9"
-              inputMode="decimal"
-              autoFocus
-              aria-invalid={overpaying}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            />
-            {overpaying && (
-              <p className="text-xs font-semibold text-primary">
-                That is more than the {money(invoice.balance_pence)} outstanding.
-              </p>
-            )}
-          </Field>
-          <Field label="Method" htmlFor="pay-method">
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger id="pay-method" className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_METHODS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        </FieldGrid>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-muted-foreground">Quick amounts</span>
-          {[invoice.balance_pence, Math.round(invoice.balance_pence / 2), 2000, 5000, 10000]
-            .filter((v, i, arr) => v > 0 && v <= invoice.balance_pence && arr.indexOf(v) === i)
-            .map((v) => (
-              <Button
-                key={v}
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setAmount(penceToPounds(v))}
+        {!isSplit ? (
+          <div>
+            <FieldGrid cols={2}>
+              <Field
+                label="Amount"
+                htmlFor="amount"
+                hint={
+                  overpaying ? "" : `Leave as ${money(invoice.balance_pence)} to settle in full.`
+                }
               >
-                {money(v)}
-              </Button>
-            ))}
-        </div>
-        {method === "CASH" && (
-          <FieldGrid cols={2}>
-            <Field
-              label="Cash received (optional)"
-              htmlFor="tendered"
-              hint={shortTender ? "" : "Used only to work out change at the counter."}
-            >
-              <Input
-                id="tendered"
-                className="h-9"
-                inputMode="decimal"
-                value={tendered}
-                aria-invalid={shortTender}
-                onChange={(e) => setTendered(e.target.value.replace(/[^0-9.]/g, ""))}
-              />
-              {shortTender && (
-                <p className="text-xs font-semibold text-primary">
-                  Less than the {money(amountPence)} being recorded.
-                </p>
-              )}
-            </Field>
-            <Field label="Change due">
-              <p className="flex h-9 items-center text-base font-extrabold tabular-nums">
-                {money(changePence)}
-              </p>
-            </Field>
-          </FieldGrid>
+                <Input
+                  id="amount"
+                  className="h-9"
+                  inputMode="decimal"
+                  autoFocus
+                  aria-invalid={overpaying}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                />
+                {overpaying && (
+                  <p className="text-xs font-semibold text-primary">
+                    That is more than the {money(invoice.balance_pence)} outstanding.
+                  </p>
+                )}
+              </Field>
+              <Field label="Method" htmlFor="pay-method">
+                <Select value={method} onValueChange={setMethod}>
+                  <SelectTrigger id="pay-method" className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </FieldGrid>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-muted-foreground">Quick amounts</span>
+                {[invoice.balance_pence, Math.round(invoice.balance_pence / 2), 2000, 5000, 10000]
+                  .filter((v, i, arr) => v > 0 && v <= invoice.balance_pence && arr.indexOf(v) === i)
+                  .map((v) => (
+                    <Button
+                      key={v}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setAmount(penceToPounds(v))}
+                    >
+                      {money(v)}
+                    </Button>
+                  ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSplit(true);
+                  const halfPence = Math.floor(invoice.balance_pence / 2);
+                  const remPence = invoice.balance_pence - halfPence;
+                  setSplits([
+                    { id: "1", method: "CASH", amount: penceToPounds(halfPence), ref: "" },
+                    { id: "2", method: "CARD", amount: penceToPounds(remPence), ref: "" },
+                  ]);
+                }}
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                + Split payment (Cash + Card)
+              </button>
+            </div>
+            {method === "CASH" && (
+              <FieldGrid cols={2} className="pt-2">
+                <Field
+                  label="Cash received (optional)"
+                  htmlFor="tendered"
+                  hint={shortTender ? "" : "Used only to work out change at the counter."}
+                >
+                  <Input
+                    id="tendered"
+                    className="h-9"
+                    inputMode="decimal"
+                    value={tendered}
+                    aria-invalid={shortTender}
+                    onChange={(e) => setTendered(e.target.value.replace(/[^0-9.]/g, ""))}
+                  />
+                  {shortTender && (
+                    <p className="text-xs font-semibold text-primary">
+                      Less than the {money(effectiveAmountPence)} being recorded.
+                    </p>
+                  )}
+                </Field>
+                <Field label="Change due">
+                  <p className="flex h-9 items-center text-base font-extrabold tabular-nums">
+                    {money(changePence)}
+                  </p>
+                </Field>
+              </FieldGrid>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2 rounded-md border border-admin-border bg-surface p-3 text-xs">
+            <div className="flex items-center justify-between font-bold">
+              <span>Split payments</span>
+              <button
+                type="button"
+                onClick={() => setIsSplit(false)}
+                className="text-[0.7rem] font-semibold text-muted-foreground hover:text-foreground"
+              >
+                Single payment mode
+              </button>
+            </div>
+            <div className="space-y-2 pt-1">
+              {splits.map((s) => (
+                <div key={s.id} className="grid grid-cols-12 gap-2 items-center">
+                  <div className="col-span-4">
+                    <Select
+                      value={s.method}
+                      onValueChange={(v) => {
+                        setSplits((prev) =>
+                          prev.map((item) => (item.id === s.id ? { ...item, method: v } : item)),
+                        );
+                      }}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAYMENT_METHODS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-4">
+                    <Input
+                      className="h-8 text-xs"
+                      inputMode="decimal"
+                      value={s.amount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, "");
+                        setSplits((prev) =>
+                          prev.map((item) => (item.id === s.id ? { ...item, amount: val } : item)),
+                        );
+                      }}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <Input
+                      className="h-8 text-xs"
+                      value={s.ref}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSplits((prev) =>
+                          prev.map((item) => (item.id === s.id ? { ...item, ref: val } : item)),
+                        );
+                      }}
+                      placeholder="Ref / Auth"
+                    />
+                  </div>
+                  <div className="col-span-1 text-right">
+                    {splits.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setSplits(splits.filter((x) => x.id !== s.id))}
+                        className="text-xs text-muted-foreground hover:text-destructive"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-admin-border/50">
+              <button
+                type="button"
+                onClick={() =>
+                  setSplits([
+                    ...splits,
+                    { id: crypto.randomUUID(), method: "BANK_TRANSFER", amount: "", ref: "" },
+                  ])
+                }
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                + Add method
+              </button>
+              <span className="text-[0.75rem] font-bold text-muted-foreground">
+                Sum: {money(splitSumPence)} / {money(invoice.balance_pence)}
+              </span>
+            </div>
+          </div>
         )}
         <MoreDetails cols={2} label="More options (reference, note, breakdown)">
           <Field label="Reference (optional)" htmlFor="pay-ref">
@@ -391,10 +529,10 @@ function InvoiceDetail() {
             <dl className="space-y-1 rounded-md bg-surface p-3 text-sm">
               <SummaryRow label="Invoice total" value={money(invoice.total_pence)} />
               <SummaryRow label="Already paid" value={money(invoice.amount_paid_pence)} />
-              <SummaryRow label="This payment" value={money(amountPence)} />
+              <SummaryRow label="This payment" value={money(effectiveAmountPence)} />
               <SummaryRow
                 label="Remaining after payment"
-                value={money(Math.max(invoice.balance_pence - amountPence, 0))}
+                value={money(Math.max(invoice.balance_pence - effectiveAmountPence, 0))}
                 strong
               />
             </dl>

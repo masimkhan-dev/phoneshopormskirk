@@ -72,7 +72,7 @@ const ACTIONS = [
 
 const SIMPLE_STEPS = [
   { title: "Message us directly", body: "No complicated booking process — WhatsApp, call or walk in." },
-  { title: "Visit us in town", body: "We're right in Ormskirk town centre on Aughton Street." },
+  { title: "Visit us in town", body: "You’ll find us in Ormskirk town centre on Aughton Street exactly opposite Costa Coffee." },
   { title: "Speak face-to-face", body: "Ask questions and get straightforward advice over the counter." },
   { title: "Decide before any work starts", body: "We'll explain the options first, then it's your call." },
 ] as const;
@@ -421,9 +421,9 @@ function Index() {
               4 Aughton St, Ormskirk, L39 3BW
             </h2>
             <p className="lede mt-6 max-w-xl text-on-brand/85">
-              Right in Ormskirk town centre. Drop in and we'll look at your device over the counter,
-              or call ahead if you need a specific part and we'll check we've got it before you set
-              off.
+              Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee. Drop in and
+              we'll look at your device over the counter, or call ahead if you need a specific part
+              and we'll check we've got it before you set off.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">

@@ -58,9 +58,9 @@ function AboutPage() {
             <h2 className="display-2">Honesty first</h2>
             <div className="mt-6 space-y-6 text-muted-foreground">
               <p>
-                We're an independent shop right in Ormskirk town centre, and most of our customers
-                come from word of mouth. That only works if every job is done properly, so getting it
-                right matters more to us than pushing a sale.
+                You’ll find us in Ormskirk town centre on Aughton Street exactly opposite Costa
+                Coffee, and most of our customers come from word of mouth. That only works if every job
+                is done properly, so getting it right matters more to us than pushing a sale.
               </p>
               <p>
                 If a repair isn't worth the money, we'll tell you — even when that means we don't take
