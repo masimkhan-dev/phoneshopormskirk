@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Menu, Phone, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import logoImg from "@/assets/logo.png";
 import { businessQuery } from "@/lib/queries";
@@ -19,24 +19,88 @@ const NAV = [
   { to: "/contact", label: "Contact" },
 ] as const;
 
+const TICKER_MESSAGES = [
+  "Same-day phone repairs available",
+  "Screen repairs while you wait",
+  "Buy & sell phones in Ormskirk",
+  "Free repair quote on WhatsApp",
+  "Accessories available in store",
+  "Find us opposite Costa Coffee",
+] as const;
+
+const MOBILE_MESSAGES = [
+  "Same-day repairs in Ormskirk",
+  "Opposite Costa Coffee · Aughton St",
+  "Screen repairs while you wait",
+  "Free repair quote on WhatsApp",
+] as const;
+
 export function Header() {
   const { data: business } = useQuery(businessQuery());
   const [open, setOpen] = useState(false);
+  const [mobileIdx, setMobileIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMobileIdx((prev) => (prev + 1) % MOBILE_MESSAGES.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur">
-      <div className="brand-panel-deep hidden md:block">
-        <div className="container-page flex items-center justify-between py-2 text-xs font-medium text-on-brand/85">
-          <OpenStatus tone="brand" />
-          <a
-            href={directionsUrl(business)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-semibold text-on-brand hover:underline"
+      <div className="brand-panel-deep border-b border-white/10 text-on-brand">
+        {/* MOBILE (< sm): Clean, single marketing/location highlight — no status badge */}
+        <div className="container-page flex items-center justify-center py-1.5 text-center sm:hidden">
+          <span className="truncate text-[0.75rem] font-semibold text-on-brand/95">
+            {MOBILE_MESSAGES[mobileIdx]}
+          </span>
+        </div>
+
+        {/* DESKTOP & TABLET (sm:flex): 3-zone layout with Open Status, Ticker, and Address */}
+        <div className="container-page hidden items-center justify-between gap-4 py-1.5 text-xs font-medium sm:flex">
+          {/* ZONE 1 (LEFT): Opening Status */}
+          <div className="shrink-0">
+            <OpenStatus tone="brand" />
+          </div>
+
+          {/* ZONE 2 (CENTER): Scrolling Promotional Ticker */}
+          <div
+            className="ticker-fade-mask relative flex-1 min-w-0 overflow-hidden"
+            aria-label="Shop highlights and promotions"
           >
-            <MapPin className="size-3.5" aria-hidden />
-            4 Aughton St, Ormskirk L39 3BW
-          </a>
+            <div className="animate-header-ticker select-none">
+              <div className="flex items-center gap-6 pr-6">
+                {TICKER_MESSAGES.map((msg, i) => (
+                  <span key={i} className="inline-flex items-center gap-6 whitespace-nowrap text-xs font-semibold text-on-brand/90">
+                    <span>{msg}</span>
+                    <span className="text-on-brand/40 select-none" aria-hidden="true">·</span>
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-6 pr-6" aria-hidden="true">
+                {TICKER_MESSAGES.map((msg, i) => (
+                  <span key={`dup-${i}`} className="inline-flex items-center gap-6 whitespace-nowrap text-xs font-semibold text-on-brand/90">
+                    <span>{msg}</span>
+                    <span className="text-on-brand/40 select-none">·</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ZONE 3 (RIGHT): Address */}
+          <div className="hidden shrink-0 lg:flex items-center">
+            <a
+              href={directionsUrl(business)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-semibold text-on-brand hover:underline"
+            >
+              <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
+              <span>4 Aughton St, Ormskirk L39 3BW</span>
+            </a>
+          </div>
         </div>
       </div>
 
