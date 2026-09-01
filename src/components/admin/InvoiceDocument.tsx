@@ -3,6 +3,7 @@ import { money, paymentMethodLabel, ukDate, ukDateTime } from "@/lib/admin/money
 import type { Invoice, Payment } from "@/lib/admin/queries";
 import type { InvoiceTermsSnapshot } from "@/lib/admin/terms";
 import logoImg from "@/assets/logo.png";
+import qrReviewImg from "@/assets/qr code google review.png";
 
 type Business = {
   business_name?: string;
@@ -78,7 +79,7 @@ export function InvoiceDocument({
           <img
             src={logoImg}
             alt="Phone Shop Ormskirk"
-            className="h-16 w-auto object-contain print:h-16"
+            className="h-24 w-auto object-contain print:h-24"
           />
           <div className="text-xs leading-relaxed text-ink/70">
             <p>
@@ -208,6 +209,18 @@ export function InvoiceDocument({
       )}
 
       <TermsBlockA4 terms={terms} />
+
+      <div className="mt-4 flex items-center justify-end gap-3 text-right break-inside-avoid">
+        <div>
+          <p className="text-xs font-bold text-ink">Loved our service?</p>
+          <p className="text-[0.72rem] text-ink/70">Scan to leave us a Google review</p>
+        </div>
+        <img
+          src={qrReviewImg}
+          alt="Scan to leave a Google review"
+          className="h-[96px] w-[96px] rounded border border-ink/10 bg-white p-1 object-contain"
+        />
+      </div>
 
       <footer className="mt-4 space-y-0.5 border-t border-ink/10 pt-3 text-center text-xs leading-relaxed text-ink/70">
         {invoice.notes && <p className="mb-1 text-left font-normal text-ink/80">{invoice.notes}</p>}

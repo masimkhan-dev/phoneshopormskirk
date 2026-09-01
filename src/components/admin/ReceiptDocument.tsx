@@ -3,6 +3,7 @@ import { money, paymentMethodLabel, ukDateTime } from "@/lib/admin/money";
 import type { Invoice, Payment } from "@/lib/admin/queries";
 import type { InvoiceTermsSnapshot } from "@/lib/admin/terms";
 import logoImg from "@/assets/logo.png";
+import qrReviewImg from "@/assets/qr code google review.png";
 
 type Business = {
   business_name?: string;
@@ -82,7 +83,7 @@ export function ReceiptDocument({
         <img
           src={logoImg}
           alt=""
-          className="mx-auto mb-2 h-14 w-auto object-contain"
+          className="mx-auto mb-2 h-20 w-auto object-contain"
         />
         <p className="text-[0.7rem]">
           {[business.address_line1, business.city, business.postcode]
@@ -159,6 +160,16 @@ export function ReceiptDocument({
       )}
 
       <TermsBlockThermal terms={terms} />
+
+      <div className="mt-2.5 border-t border-dashed border-ink/40 pt-2 text-center break-inside-avoid">
+        <p className="text-[0.72rem] font-bold text-ink">Leave us a Google review</p>
+        <p className="text-[0.65rem] text-ink/70">Scan the QR code</p>
+        <img
+          src={qrReviewImg}
+          alt="Google Review QR"
+          className="mx-auto mt-1 h-[96px] w-[96px] rounded bg-white p-1 object-contain"
+        />
+      </div>
 
       <div className="mt-2 border-t border-dashed border-ink/40 pt-1.5 text-center text-[0.68rem] leading-tight">
         {invoice.notes && <p className="mb-1 text-left text-ink/80">{invoice.notes}</p>}
