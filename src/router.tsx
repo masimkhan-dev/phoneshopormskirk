@@ -7,8 +7,29 @@ const ADMIN_HOSTNAMES = new Set([
   "admin.localhost",
 ]);
 
+const PUBLIC_HOSTNAMES = new Set([
+  "phonestoreormskirk.co.uk",
+  "www.phonestoreormskirk.co.uk",
+]);
+
 function isAdminHost(hostname: string): boolean {
   return ADMIN_HOSTNAMES.has(hostname.toLowerCase());
+}
+
+function isPublicHost(hostname: string): boolean {
+  return PUBLIC_HOSTNAMES.has(hostname.toLowerCase());
+}
+
+function isAuthPath(pathname: string): boolean {
+  const p = pathname.toLowerCase();
+  return (
+    p === "/auth" ||
+    p.startsWith("/auth/") ||
+    p === "/forgot-password" ||
+    p.startsWith("/forgot-password/") ||
+    p === "/reset-password" ||
+    p.startsWith("/reset-password/")
+  );
 }
 
 export const getRouter = () => {
@@ -21,17 +42,23 @@ export const getRouter = () => {
     defaultPreloadStaleTime: 0,
     rewrite: {
       input: ({ url }) => {
-        if (!isAdminHost(url.hostname)) return url;
-
+        const host = url.hostname.toLowerCase();
         const pathname = url.pathname;
+
+        // Block admin authentication routes on public domains by rewriting to home
+        if (isPublicHost(host) && isAuthPath(pathname)) {
+          const nextUrl = new URL(url);
+          nextUrl.pathname = "/";
+          return nextUrl;
+        }
+
+        if (!isAdminHost(host)) return url;
 
         // Do not rewrite framework assets, server functions, auth pages, or files with extensions
         if (
           pathname.startsWith("/_") ||
           pathname.startsWith("/assets/") ||
-          pathname.startsWith("/auth") ||
-          pathname.startsWith("/forgot-password") ||
-          pathname.startsWith("/reset-password") ||
+          isAuthPath(pathname) ||
           /\.[a-zA-Z0-9]+$/.test(pathname)
         ) {
           return url;
