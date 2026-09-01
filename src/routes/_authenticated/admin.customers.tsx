@@ -93,54 +93,84 @@ function Customers() {
         }
       />
 
-      <div className="admin-card p-4">
-        <div className="relative max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Compact Filter Toolbar */}
+      <div className="admin-card flex flex-wrap items-center justify-between gap-3 p-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="h-8 pl-8 text-xs"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name, 07496…, email"
+            placeholder="Search name, phone number, email…"
           />
         </div>
+        <span className="text-xs text-muted-foreground font-semibold">
+          {data.length} {data.length === 1 ? "customer" : "customers"}
+        </span>
       </div>
 
       <Section>
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : data.length ? (
-          <TableShell>
-            <thead>
-              <tr>
-                <Th>Name</Th>
-                <Th>Phone</Th>
-                <Th>Email</Th>
-                <Th>Postcode</Th>
-                <Th>Added</Th>
-                <Th />
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop & Tablet Table */}
+            <div className="hidden md:block">
+              <TableShell minWidth="min-w-[50rem]" stickyHeader>
+                <thead>
+                  <tr>
+                    <Th>Name</Th>
+                    <Th className="w-36">Phone</Th>
+                    <Th className="w-48">Email</Th>
+                    <Th className="w-28">Postcode</Th>
+                    <Th className="w-28">Added</Th>
+                    <Th className="w-20 text-right" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((c) => (
+                    <tr key={c.id} className="hover:bg-surface/60 transition-colors">
+                      <Td className="font-bold text-foreground">{c.name}</Td>
+                      <Td>
+                        <a href={`tel:${c.phone}`} className="font-medium text-primary hover:underline">
+                          {c.phone}
+                        </a>
+                      </Td>
+                      <Td className="text-muted-foreground">{c.email ?? "—"}</Td>
+                      <Td className="text-muted-foreground uppercase">{c.postcode ?? "—"}</Td>
+                      <Td className="text-muted-foreground whitespace-nowrap">{ukDate(c.created_at)}</Td>
+                      <Td className="text-right">
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs" onClick={() => edit(c)}>
+                          Edit
+                        </Button>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableShell>
+            </div>
+
+            {/* Mobile Stacked List (< md) */}
+            <div className="divide-y divide-admin-border md:hidden">
               {data.map((c) => (
-                <tr key={c.id} className="hover:bg-surface">
-                  <Td className="font-bold">{c.name}</Td>
-                  <Td>
-                    <a href={`tel:${c.phone}`} className="text-primary">
-                      {c.phone}
-                    </a>
-                  </Td>
-                  <Td className="text-muted-foreground">{c.email ?? "—"}</Td>
-                  <Td className="text-muted-foreground">{c.postcode ?? "—"}</Td>
-                  <Td className="text-muted-foreground">{ukDate(c.created_at)}</Td>
-                  <Td className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => edit(c)}>
+                <div key={c.id} className="p-3 space-y-1 hover:bg-surface/50 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-extrabold text-foreground text-xs">{c.name}</span>
+                    <Button size="sm" variant="outline" className="h-6 px-2 text-[0.7rem]" onClick={() => edit(c)}>
                       Edit
                     </Button>
-                  </Td>
-                </tr>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <a href={`tel:${c.phone}`} className="font-semibold text-primary">
+                      {c.phone}
+                    </a>
+                    {c.postcode && <span className="text-muted-foreground uppercase text-[0.72rem]">{c.postcode}</span>}
+                  </div>
+                  {c.email && <p className="text-[0.72rem] text-muted-foreground truncate">{c.email}</p>}
+                </div>
               ))}
-            </tbody>
-          </TableShell>
+            </div>
+          </>
         ) : (
           <EmptyState
             title="No customers yet."

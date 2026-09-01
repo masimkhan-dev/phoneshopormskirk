@@ -48,17 +48,18 @@ function Repairs() {
         }
       />
 
-      <div className="admin-card space-y-3 p-4">
-        <div className="relative max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Compact Filter Toolbar */}
+      <div className="admin-card flex flex-wrap items-center justify-between gap-3 p-3">
+        <div className="relative w-full sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="h-8 pl-8 text-xs"
             value={filter.search}
             onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-            placeholder="REP-0001, IMEI, iPhone 13, screen…"
+            placeholder="Search REP #, IMEI, device, fault…"
           />
         </div>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           <FilterPills
             value={filter.period}
             onChange={(period) => setFilter({ ...filter, period })}
@@ -69,6 +70,7 @@ function Repairs() {
               { value: "all", label: "All time" },
             ]}
           />
+          <span className="hidden h-4 w-px bg-admin-border md:block" />
           <FilterPills
             value={filter.payment}
             onChange={(payment) => setFilter({ ...filter, payment })}
@@ -86,73 +88,121 @@ function Repairs() {
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : data.length ? (
-          <TableShell>
-            <thead>
-              <tr>
-                <Th>Repair #</Th>
-                <Th>Customer</Th>
-                <Th>Device</Th>
-                <Th>Fault</Th>
-                <Th>Taken in</Th>
-                <Th className="text-right">Total</Th>
-                <Th className="text-right">Balance</Th>
-                <Th>Status</Th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop & Tablet Table */}
+            <div className="hidden md:block">
+              <TableShell minWidth="min-w-[58rem]" stickyHeader>
+                <thead>
+                  <tr>
+                    <Th className="w-28">Repair #</Th>
+                    <Th className="w-36">Customer</Th>
+                    <Th>Device</Th>
+                    <Th className="w-36">IMEI</Th>
+                    <Th>Fault</Th>
+                    <Th className="w-36">Taken in</Th>
+                    <Th className="w-24 text-right">Total</Th>
+                    <Th className="w-24 text-right">Balance</Th>
+                    <Th className="w-24 text-center">Status</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((r) => (
+                    <tr key={r.id} className="hover:bg-surface/60 transition-colors">
+                      <Td>
+                        {r.invoice_id ? (
+                          <Link
+                            to="/admin/invoices/$invoiceId"
+                            params={{ invoiceId: r.invoice_id }}
+                            className="font-bold text-primary hover:underline"
+                          >
+                            {r.repair_number}
+                          </Link>
+                        ) : (
+                          <span className="font-bold">{r.repair_number}</span>
+                        )}
+                      </Td>
+                      <Td className="font-semibold truncate max-w-[9rem]">
+                        {r.customers?.name ?? <span className="text-muted-foreground font-normal">Walk-in</span>}
+                      </Td>
+                      <Td className="font-medium text-foreground">
+                        {[r.device_brand, r.device_model].filter(Boolean).join(" ") || "—"}
+                      </Td>
+                      <Td>
+                        {r.imei ? (
+                          <span className="font-mono text-[0.75rem] tracking-tight text-foreground/80 select-all">
+                            {r.imei}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </Td>
+                      <Td className="max-w-44 truncate text-muted-foreground">{r.fault}</Td>
+                      <Td className="text-muted-foreground whitespace-nowrap">{ukDateTime(r.created_at)}</Td>
+                      <Td className="text-right font-bold">
+                        <Money pence={r.total_pence} />
+                      </Td>
+                      <Td className="text-right font-semibold">
+                        <Money pence={r.balance_pence} />
+                      </Td>
+                      <Td className="text-center">
+                        {r.record_status === "VOIDED" ? (
+                          <RecordStatusBadge status="VOIDED" />
+                        ) : (
+                          <PaymentStatusBadge status={r.payment_status} />
+                        )}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableShell>
+            </div>
+
+            {/* Mobile Stacked List (< md) */}
+            <div className="divide-y divide-admin-border md:hidden">
               {data.map((r) => (
-                <tr key={r.id} className="hover:bg-surface">
-                  <Td>
+                <div key={r.id} className="p-3 space-y-1.5 hover:bg-surface/50 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
                     {r.invoice_id ? (
                       <Link
                         to="/admin/invoices/$invoiceId"
                         params={{ invoiceId: r.invoice_id }}
-                        className="font-bold text-primary"
+                        className="font-extrabold text-primary hover:underline text-xs"
                       >
                         {r.repair_number}
                       </Link>
                     ) : (
-                      <span className="font-bold">{r.repair_number}</span>
+                      <span className="font-extrabold text-xs">{r.repair_number}</span>
                     )}
-                  </Td>
-                  <Td>
-                    {r.customers?.name ?? "—"}
-                    {r.customers?.phone && (
-                      <span className="block text-xs text-muted-foreground">
-                        {r.customers.phone}
-                      </span>
-                    )}
-                  </Td>
-                  <Td>{[r.device_brand, r.device_model].filter(Boolean).join(" ") || "—"}</Td>
-                  <Td className="max-w-56 truncate text-muted-foreground">{r.fault}</Td>
-                  <Td className="text-muted-foreground">{ukDateTime(r.created_at)}</Td>
-                  <Td className="text-right">
-                    <Money pence={r.total_pence} />
-                  </Td>
-                  <Td className="text-right">
-                    <Money pence={r.balance_pence} />
-                  </Td>
-                  <Td>
                     {r.record_status === "VOIDED" ? (
                       <RecordStatusBadge status="VOIDED" />
                     ) : (
                       <PaymentStatusBadge status={r.payment_status} />
                     )}
-                  </Td>
-                </tr>
+                  </div>
+
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-xs font-bold text-foreground truncate">
+                      {[r.device_brand, r.device_model].filter(Boolean).join(" ") || "Repair"}
+                    </p>
+                    <p className="text-xs font-black text-foreground shrink-0">
+                      <Money pence={r.total_pence} />
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[0.72rem] text-muted-foreground">
+                    <span className="truncate">{r.customers?.name ?? "Walk-in"} · {r.fault}</span>
+                    {r.imei && (
+                      <span className="font-mono text-[0.7rem] text-foreground/75 shrink-0">
+                        IMEI: {r.imei}
+                      </span>
+                    )}
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </TableShell>
+            </div>
+          </>
         ) : (
-          <EmptyState
-            title="No repairs found."
-            description="Change the filters or start a new repair."
-            action={
-              <Button asChild>
-                <Link to="/admin/new-repair">New repair</Link>
-              </Button>
-            }
-          />
+          <EmptyState title="No repairs match this filter." />
         )}
       </Section>
     </div>

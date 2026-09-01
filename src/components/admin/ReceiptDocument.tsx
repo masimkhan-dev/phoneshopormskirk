@@ -1,6 +1,7 @@
 import { TermsBlockThermal, invoiceTerms } from "@/components/admin/TermsBlock";
 import { money, paymentMethodLabel, ukDateTime } from "@/lib/admin/money";
 import type { Invoice, Payment } from "@/lib/admin/queries";
+import type { InvoiceTermsSnapshot } from "@/lib/admin/terms";
 import logoImg from "@/assets/logo.png";
 
 type Business = {
@@ -29,6 +30,7 @@ export function ReceiptDocument({
   invoice,
   items,
   payments,
+  termsRecord,
 }: {
   invoice: Invoice & { customers: { name: string; phone: string } | null };
   items: {
@@ -39,6 +41,7 @@ export function ReceiptDocument({
     line_total_pence: number;
   }[];
   payments: Payment[];
+  termsRecord?: InvoiceTermsSnapshot | null;
 }) {
   const snapshot = (invoice.snapshot ?? {}) as {
     business?: Business;
@@ -71,7 +74,7 @@ export function ReceiptDocument({
     .filter(Boolean)
     .join(" ");
   const imei = repair?.imei ?? stock?.imei;
-  const terms = invoiceTerms(invoice.snapshot);
+  const terms = invoiceTerms(invoice.snapshot, termsRecord);
 
   return (
     <div className="print-doc receipt-doc mx-auto w-full max-w-[80mm] rounded-lg border border-admin-border bg-white p-4 text-[0.78rem] leading-snug text-ink print:rounded-none">
@@ -79,12 +82,9 @@ export function ReceiptDocument({
         <img
           src={logoImg}
           alt=""
-          className="mx-auto mb-2 h-10 w-auto object-contain"
+          className="mx-auto mb-2 h-14 w-auto object-contain"
         />
-        <p className="text-sm font-extrabold uppercase tracking-wide">
-          {business.business_name ?? "Phone Shop Ormskirk"}
-        </p>
-        <p className="mt-0.5 text-[0.7rem]">
+        <p className="text-[0.7rem]">
           {[business.address_line1, business.city, business.postcode]
             .filter(Boolean)
             .join(", ")}
@@ -158,13 +158,18 @@ export function ReceiptDocument({
         </p>
       )}
 
-      {terms && <TermsBlockThermal terms={terms} />}
+      <TermsBlockThermal terms={terms} />
 
-      <div className="mt-2 border-t border-dashed border-ink/40 pt-1 text-[0.68rem] leading-relaxed">
-        {invoice.notes && <p>{invoice.notes}</p>}
-        {!terms && business.warranty_policy && <p>{business.warranty_policy}</p>}
-        <p className="mt-1 text-center font-semibold">
+      <div className="mt-2 border-t border-dashed border-ink/40 pt-1.5 text-center text-[0.68rem] leading-tight">
+        {invoice.notes && <p className="mb-1 text-left text-ink/80">{invoice.notes}</p>}
+        {!terms && business.warranty_policy && <p className="mb-1 text-left">{business.warranty_policy}</p>}
+        <p className="font-semibold text-ink">
           Thank you for choosing {business.business_name ?? "Phone Shop Ormskirk"}.
+        </p>
+        <p className="text-[0.62rem] text-ink/60">
+          {(terms?.warranty_days ?? 0) > 0
+            ? "Please retain this receipt for warranty claims."
+            : "Please retain this receipt for your records."}
         </p>
       </div>
     </div>

@@ -76,44 +76,92 @@ function Payments() {
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : data.length ? (
-          <TableShell>
-            <thead>
-              <tr>
-                <Th>Taken</Th>
-                <Th>Invoice</Th>
-                <Th>Method</Th>
-                <Th>Direction</Th>
-                <Th>Reference</Th>
-                <Th className="text-right">Amount</Th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop & Tablet Table */}
+            <div className="hidden md:block">
+              <TableShell minWidth="min-w-[50rem]" stickyHeader>
+                <thead>
+                  <tr>
+                    <Th className="w-36">Date</Th>
+                    <Th className="w-28">Invoice</Th>
+                    <Th className="w-36">Customer</Th>
+                    <Th className="w-28">Method</Th>
+                    <Th className="w-24 text-center">Direction</Th>
+                    <Th>Reference</Th>
+                    <Th className="w-28 text-right">Amount</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((p) => (
+                    <tr key={p.id} className="hover:bg-surface/60 transition-colors">
+                      <Td className="text-muted-foreground whitespace-nowrap">{ukDateTime(p.created_at)}</Td>
+                      <Td>
+                        <Link
+                          to="/admin/invoices/$invoiceId"
+                          params={{ invoiceId: p.invoice_id }}
+                          className="font-bold text-primary hover:underline"
+                        >
+                          {p.invoices?.invoice_number ?? "View"}
+                        </Link>
+                      </Td>
+                      <Td className="font-semibold truncate max-w-[9rem]">
+                        {p.invoices?.customers?.name ?? <span className="text-muted-foreground font-normal">Walk-in</span>}
+                      </Td>
+                      <Td className="font-medium text-foreground">{p.method}</Td>
+                      <Td className="text-center">
+                        <StatusBadge tone={p.direction === "IN" ? "green" : "amber"}>
+                          {p.direction === "IN" ? "In" : "Out"}
+                        </StatusBadge>
+                      </Td>
+                      <Td className="text-muted-foreground font-mono text-[0.75rem] truncate max-w-[10rem]">
+                        {p.reference ?? "—"}
+                      </Td>
+                      <Td className="text-right font-bold">
+                        <Money pence={p.amount_pence} />
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableShell>
+            </div>
+
+            {/* Mobile Stacked List (< md) */}
+            <div className="divide-y divide-admin-border md:hidden">
               {data.map((p) => (
-                <tr key={p.id} className="hover:bg-surface">
-                  <Td className="text-muted-foreground">{ukDateTime(p.created_at)}</Td>
-                  <Td>
+                <div key={p.id} className="p-3 space-y-1 hover:bg-surface/50 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
                     <Link
                       to="/admin/invoices/$invoiceId"
                       params={{ invoiceId: p.invoice_id }}
-                      className="font-bold text-primary"
+                      className="font-extrabold text-primary hover:underline text-xs"
                     >
-                      {p.invoices?.invoice_number ?? "View"}
+                      {p.invoices?.invoice_number ?? "View Invoice"}
                     </Link>
-                  </Td>
-                  <Td>{p.method}</Td>
-                  <Td>
-                    <StatusBadge tone={p.direction === "IN" ? "green" : "amber"}>
-                      {p.direction === "IN" ? "In" : "Out"}
-                    </StatusBadge>
-                  </Td>
-                  <Td className="text-muted-foreground">{p.reference ?? "—"}</Td>
-                  <Td className="text-right">
-                    <Money pence={p.amount_pence} />
-                  </Td>
-                </tr>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-muted-foreground">{p.method}</span>
+                      <StatusBadge tone={p.direction === "IN" ? "green" : "amber"}>
+                        {p.direction === "IN" ? "In" : "Out"}
+                      </StatusBadge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-baseline justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground truncate">
+                      {p.invoices?.customers?.name ?? "Walk-in"}
+                    </span>
+                    <span className="font-extrabold text-foreground tabular-nums shrink-0">
+                      <Money pence={p.amount_pence} />
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[0.7rem] text-muted-foreground">
+                    <span>{ukDateTime(p.created_at)}</span>
+                    {p.reference && <span className="font-mono">{p.reference}</span>}
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </TableShell>
+            </div>
+          </>
         ) : (
           <EmptyState title="No payments in this period." />
         )}

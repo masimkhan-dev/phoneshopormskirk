@@ -1,6 +1,7 @@
 import { TermsBlockA4, invoiceTerms } from "@/components/admin/TermsBlock";
 import { money, paymentMethodLabel, ukDate, ukDateTime } from "@/lib/admin/money";
 import type { Invoice, Payment } from "@/lib/admin/queries";
+import type { InvoiceTermsSnapshot } from "@/lib/admin/terms";
 import logoImg from "@/assets/logo.png";
 
 type Business = {
@@ -29,6 +30,7 @@ export function InvoiceDocument({
   invoice,
   items,
   payments,
+  termsRecord,
 }: {
   invoice: Invoice & { customers: { name: string; phone: string } | null };
   items: {
@@ -40,6 +42,7 @@ export function InvoiceDocument({
     meta?: Record<string, unknown> | null;
   }[];
   payments: Payment[];
+  termsRecord?: InvoiceTermsSnapshot | null;
 }) {
   const snapshot = invoice.snapshot as {
     business?: Business;
@@ -66,26 +69,24 @@ export function InvoiceDocument({
   const repair = snapshot?.repair;
   const stock = snapshot?.stock;
   const isPurchase = invoice.kind === "PHONE_PURCHASE";
-  const terms = invoiceTerms(invoice.snapshot);
+  const terms = invoiceTerms(invoice.snapshot, termsRecord);
 
   return (
     <div className="print-doc mx-auto w-full max-w-[46rem] rounded-lg border border-admin-border bg-white p-6 text-[0.9rem] text-ink print:max-w-none print:rounded-none print:border-0 print:p-0">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-ink/10 pb-4">
-        <div className="flex items-start gap-4">
+        <div className="flex items-center gap-4">
           <img
             src={logoImg}
-            alt=""
-            className="h-12 w-auto object-contain print:h-10"
+            alt="Phone Shop Ormskirk"
+            className="h-16 w-auto object-contain print:h-16"
           />
-          <div>
-            <p className="text-xl font-extrabold tracking-tight">
-              {business.business_name ?? "Phone Shop Ormskirk"}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-ink/70">
+          <div className="text-xs leading-relaxed text-ink/70">
+            <p>
               {[business.address_line1, business.city, business.postcode]
                 .filter(Boolean)
                 .join(", ")}
-              <br />
+            </p>
+            <p className="mt-0.5">
               {business.phone}
               {business.email ? ` · ${business.email}` : ""}
             </p>
@@ -206,17 +207,20 @@ export function InvoiceDocument({
         </section>
       )}
 
-      {terms && <TermsBlockA4 terms={terms} />}
+      <TermsBlockA4 terms={terms} />
 
-      {(invoice.notes || (!terms && business.warranty_policy)) && (
-        <footer className="mt-5 space-y-2 border-t border-ink/10 pt-3 text-xs leading-relaxed text-ink/70">
-          {invoice.notes && <p>{invoice.notes}</p>}
-          {!terms && business.warranty_policy && <p>{business.warranty_policy}</p>}
-          <p className="font-semibold text-ink">
-            Thank you for choosing {business.business_name ?? "Phone Shop Ormskirk"}.
-          </p>
-        </footer>
-      )}
+      <footer className="mt-4 space-y-0.5 border-t border-ink/10 pt-3 text-center text-xs leading-relaxed text-ink/70">
+        {invoice.notes && <p className="mb-1 text-left font-normal text-ink/80">{invoice.notes}</p>}
+        {!terms && business.warranty_policy && <p className="mb-1 text-left">{business.warranty_policy}</p>}
+        <p className="font-semibold text-ink">
+          Thank you for choosing {business.business_name ?? "Phone Shop Ormskirk"}.
+        </p>
+        <p className="text-[0.7rem] text-ink/60">
+          {(terms?.warranty_days ?? 0) > 0
+            ? "Please retain this receipt for warranty claims."
+            : "Please retain this receipt for your records."}
+        </p>
+      </footer>
     </div>
   );
 }

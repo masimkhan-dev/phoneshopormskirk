@@ -267,9 +267,9 @@ function InvoiceDetail() {
       </div>
 
       {format === "a4" ? (
-        <InvoiceDocument invoice={invoice} items={items} payments={payments} />
+        <InvoiceDocument invoice={invoice} items={items} payments={payments} termsRecord={data.terms} />
       ) : (
-        <ReceiptDocument invoice={invoice} items={items} payments={payments} />
+        <ReceiptDocument invoice={invoice} items={items} payments={payments} termsRecord={data.terms} />
       )}
 
       <FormDialog

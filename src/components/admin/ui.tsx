@@ -634,19 +634,22 @@ export function TableShell({
   className,
   tableClassName,
   minWidth = true,
+  stickyHeader = false,
 }: {
   children: ReactNode;
   className?: string;
   tableClassName?: string;
   minWidth?: boolean | string;
+  stickyHeader?: boolean;
 }) {
   return (
     <div className={cn("overflow-x-auto scrollbar-hidden", className)}>
       <table
         className={cn(
-          "w-full border-collapse text-sm",
+          "w-full border-collapse text-xs",
           minWidth === true && "min-w-[46rem]",
           typeof minWidth === "string" && minWidth,
+          stickyHeader && "[&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:bg-admin-panel [&_thead_th]:z-10",
           tableClassName,
         )}
       >
@@ -666,7 +669,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "admin-th border-b border-admin-border px-3 py-2 text-left text-xs",
+        "admin-th border-b border-admin-border/80 bg-admin-panel px-3 py-2 text-left text-[0.72rem] font-bold uppercase tracking-wider text-muted-foreground",
         className,
       )}
     >
@@ -683,7 +686,12 @@ export function Td({
   className?: string;
 }) {
   return (
-    <td className={cn("border-b border-admin-border px-3 py-2 text-xs align-middle", className)}>
+    <td
+      className={cn(
+        "border-b border-admin-border/60 px-3 py-2 text-xs align-middle leading-tight text-foreground",
+        className,
+      )}
+    >
       {children}
     </td>
   );

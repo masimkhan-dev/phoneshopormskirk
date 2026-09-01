@@ -183,17 +183,18 @@ function Stock() {
         }
       />
 
-      <div className="admin-card space-y-3 p-4">
-        <div className="relative max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Compact Filter Toolbar */}
+      <div className="admin-card flex flex-wrap items-center justify-between gap-3 p-3">
+        <div className="relative w-full sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="h-8 pl-8 text-xs"
             value={filter.search}
             onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-            placeholder="Search IMEI, SKU, brand or model"
+            placeholder="Search IMEI, SKU, brand, model…"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <FilterPills
             value={filter.status}
             onChange={(status) => setFilter({ ...filter, status })}
@@ -204,12 +205,13 @@ function Stock() {
               { value: "all", label: "All" },
             ]}
           />
-          <label className="flex cursor-pointer items-center gap-2 text-xs font-bold">
+          <span className="hidden h-4 w-px bg-admin-border md:block" />
+          <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-foreground select-none">
             <Checkbox
               checked={filter.publicOnly}
               onCheckedChange={(v) => setFilter({ ...filter, publicOnly: v === true })}
             />
-            Shown on website only
+            <span>On website only</span>
           </label>
         </div>
       </div>
@@ -218,60 +220,95 @@ function Stock() {
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : data.length ? (
-          <TableShell>
-            <thead>
-              <tr>
-                <Th>SKU</Th>
-                <Th>Handset</Th>
-                <Th>IMEI</Th>
-                <Th className="text-right">Cost</Th>
-                <Th className="text-right">Price</Th>
-                <Th className="text-right">Margin</Th>
-                <Th className="text-right">Days</Th>
-                <Th>Status</Th>
-                <Th />
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((s) => {
-                const days = daysInStock(s.created_at);
-                return (
-                  <tr key={s.id} className="hover:bg-surface">
-                    <Td className="font-bold">{s.sku}</Td>
-                    <Td>
-                      {[s.brand, s.model].filter(Boolean).join(" ") || "—"}
-                      <span className="block text-xs text-muted-foreground">
-                        {[s.storage, s.colour, s.condition?.replace("_", " ")]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </span>
-                    </Td>
-                    <Td className="text-muted-foreground">{s.imei ?? "—"}</Td>
-                    <Td className="text-right">
-                      <Money pence={s.purchase_cost_pence} />
-                    </Td>
-                    <Td className="text-right">
-                      {s.selling_price_pence ? <Money pence={s.selling_price_pence} /> : "—"}
-                    </Td>
-                    <Td className="text-right">
-                      {s.selling_price_pence ? (
-                        <Money pence={s.selling_price_pence - s.purchase_cost_pence} />
-                      ) : (
-                        "—"
-                      )}
-                    </Td>
-                    <Td className="text-right">
-                      <span
-                        className={
-                          s.status === "IN_STOCK" && days > 60
-                            ? "font-extrabold text-primary"
-                            : ""
-                        }
-                      >
-                        {days}
-                      </span>
-                    </Td>
-                    <Td>
+          <>
+            {/* Desktop & Tablet Table */}
+            <div className="hidden md:block">
+              <TableShell minWidth="min-w-[58rem]" stickyHeader>
+                <thead>
+                  <tr>
+                    <Th className="w-24">SKU</Th>
+                    <Th>Device</Th>
+                    <Th className="w-36">IMEI</Th>
+                    <Th className="w-20">Storage</Th>
+                    <Th className="w-24">Colour</Th>
+                    <Th className="w-24">Condition</Th>
+                    <Th className="w-24 text-right">Cost</Th>
+                    <Th className="w-24 text-right">Sale Price</Th>
+                    <Th className="w-24 text-center">Status</Th>
+                    <Th className="w-28 text-right" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((s) => (
+                    <tr key={s.id} className="hover:bg-surface/60 transition-colors">
+                      <Td className="font-bold text-foreground font-mono text-[0.75rem]">
+                        {s.sku}
+                      </Td>
+                      <Td className="font-bold text-foreground">
+                        {[s.brand, s.model].filter(Boolean).join(" ") || "—"}
+                      </Td>
+                      <Td>
+                        {s.imei ? (
+                          <span className="font-mono text-[0.75rem] tracking-tight text-foreground/80 select-all">
+                            {s.imei}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </Td>
+                      <Td className="text-muted-foreground font-medium">
+                        {s.storage || "—"}
+                      </Td>
+                      <Td className="text-muted-foreground">
+                        {s.colour || "—"}
+                      </Td>
+                      <Td className="text-muted-foreground capitalize">
+                        {s.condition?.replace("_", " ").toLowerCase() || "—"}
+                      </Td>
+                      <Td className="text-right">
+                        <Money pence={s.purchase_cost_pence} />
+                      </Td>
+                      <Td className="text-right font-bold">
+                        {s.selling_price_pence ? <Money pence={s.selling_price_pence} /> : "—"}
+                      </Td>
+                      <Td className="text-center">
+                        <StatusBadge
+                          tone={
+                            s.status === "IN_STOCK"
+                              ? "green"
+                              : s.status === "RESERVED"
+                                ? "amber"
+                                : "neutral"
+                          }
+                        >
+                          {s.status.replace("_", " ")}
+                        </StatusBadge>
+                      </Td>
+                      <Td className="text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openEdit(s)}>
+                            Edit
+                          </Button>
+                          {s.status !== "SOLD" && (
+                            <Button size="sm" className="h-7 px-2.5 text-xs font-bold" asChild>
+                              <Link to="/admin/sell-phone">Sell</Link>
+                            </Button>
+                          )}
+                        </div>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableShell>
+            </div>
+
+            {/* Mobile Stacked List (< md) */}
+            <div className="divide-y divide-admin-border md:hidden">
+              {data.map((s) => (
+                <div key={s.id} className="p-3 space-y-1.5 hover:bg-surface/50 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-muted-foreground">{s.sku}</span>
                       <StatusBadge
                         tone={
                           s.status === "IN_STOCK"
@@ -283,24 +320,42 @@ function Stock() {
                       >
                         {s.status.replace("_", " ")}
                       </StatusBadge>
-                    </Td>
-                    <Td className="text-right">
-                      <div className="flex justify-end gap-1.5">
-                        <Button size="sm" variant="outline" onClick={() => openEdit(s)}>
-                          Edit
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Button size="sm" variant="outline" className="h-6 px-2 text-[0.7rem]" onClick={() => openEdit(s)}>
+                        Edit
+                      </Button>
+                      {s.status !== "SOLD" && (
+                        <Button size="sm" className="h-6 px-2 text-[0.7rem] font-bold" asChild>
+                          <Link to="/admin/sell-phone">Sell</Link>
                         </Button>
-                        {s.status !== "SOLD" && (
-                          <Button size="sm" asChild>
-                            <Link to="/admin/sell-phone">Sell</Link>
-                          </Button>
-                        )}
-                      </div>
-                    </Td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </TableShell>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-xs font-extrabold text-foreground">
+                      {[s.brand, s.model].filter(Boolean).join(" ") || "—"}
+                    </p>
+                    <p className="text-xs font-black text-foreground shrink-0">
+                      {s.selling_price_pence ? <Money pence={s.selling_price_pence} /> : "—"}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[0.72rem] text-muted-foreground">
+                    <span>
+                      {[s.storage, s.colour, s.condition?.replace("_", " ")].filter(Boolean).join(" · ")}
+                    </span>
+                    {s.imei && (
+                      <span className="font-mono text-[0.7rem] text-foreground/75">
+                        IMEI: {s.imei}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <EmptyState title="No phones match this filter." />
         )}

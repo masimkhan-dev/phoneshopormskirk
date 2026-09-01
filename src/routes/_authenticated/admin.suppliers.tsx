@@ -88,48 +88,92 @@ function Suppliers() {
         }
       />
 
-      <div className="admin-card p-4">
-        <div className="relative max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Compact Filter Toolbar */}
+      <div className="admin-card flex flex-wrap items-center justify-between gap-3 p-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="h-8 pl-8 text-xs"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search suppliers"
+            placeholder="Search supplier, company, phone…"
           />
         </div>
+        <span className="text-xs text-muted-foreground font-semibold">
+          {data.length} {data.length === 1 ? "supplier" : "suppliers"}
+        </span>
       </div>
 
       <Section>
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : data.length ? (
-          <TableShell>
-            <thead>
-              <tr>
-                <Th>Name</Th>
-                <Th>Company</Th>
-                <Th>Phone</Th>
-                <Th>Email</Th>
-                <Th />
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop & Tablet Table */}
+            <div className="hidden md:block">
+              <TableShell minWidth="min-w-[48rem]" stickyHeader>
+                <thead>
+                  <tr>
+                    <Th>Supplier</Th>
+                    <Th className="w-48">Company</Th>
+                    <Th className="w-36">Phone</Th>
+                    <Th className="w-48">Email</Th>
+                    <Th className="w-20 text-right" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((s) => (
+                    <tr key={s.id} className="hover:bg-surface/60 transition-colors">
+                      <Td className="font-bold text-foreground">{s.name}</Td>
+                      <Td className="text-muted-foreground">{s.company ?? "—"}</Td>
+                      <Td>
+                        {s.phone ? (
+                          <a href={`tel:${s.phone}`} className="font-medium text-primary hover:underline">
+                            {s.phone}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </Td>
+                      <Td className="text-muted-foreground">{s.email ?? "—"}</Td>
+                      <Td className="text-right">
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs" onClick={() => edit(s)}>
+                          Edit
+                        </Button>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableShell>
+            </div>
+
+            {/* Mobile Stacked List (< md) */}
+            <div className="divide-y divide-admin-border md:hidden">
               {data.map((s) => (
-                <tr key={s.id} className="hover:bg-surface">
-                  <Td className="font-bold">{s.name}</Td>
-                  <Td className="text-muted-foreground">{s.company ?? "—"}</Td>
-                  <Td>{s.phone ?? "—"}</Td>
-                  <Td className="text-muted-foreground">{s.email ?? "—"}</Td>
-                  <Td className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => edit(s)}>
+                <div key={s.id} className="p-3 space-y-1 hover:bg-surface/50 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <span className="font-extrabold text-foreground text-xs block">{s.name}</span>
+                      {s.company && <span className="text-[0.7rem] text-muted-foreground block">{s.company}</span>}
+                    </div>
+                    <Button size="sm" variant="outline" className="h-6 px-2 text-[0.7rem]" onClick={() => edit(s)}>
                       Edit
                     </Button>
-                  </Td>
-                </tr>
+                  </div>
+                  <div className="flex items-center justify-between text-xs pt-0.5">
+                    {s.phone ? (
+                      <a href={`tel:${s.phone}`} className="font-semibold text-primary">
+                        {s.phone}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground text-[0.72rem]">No phone</span>
+                    )}
+                    {s.email && <span className="text-[0.72rem] text-muted-foreground truncate max-w-[12rem]">{s.email}</span>}
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </TableShell>
+            </div>
+          </>
         ) : (
           <EmptyState title="No suppliers yet." />
         )}

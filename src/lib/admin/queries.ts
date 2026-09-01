@@ -60,6 +60,80 @@ export type Invoice = {
   created_at: string;
 };
 
+export type InvoiceItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price_pence: number;
+  line_total_pence: number;
+  meta?: Record<string, unknown> | null;
+};
+
+export type InvoiceWithDetails = Invoice & {
+  customers: { name: string; phone: string } | null;
+  invoice_items?: InvoiceItem[] | null;
+};
+
+export type InvoiceDeviceSummary = {
+  device: string;
+  imei: string | null;
+};
+
+/**
+ * Extracts transaction-time snapshot device and IMEI data immutably.
+ * Works across repairs, phone sales, phone purchases, and product sales.
+ */
+export function getInvoiceDeviceSummary(inv: {
+  kind: string;
+  snapshot?: Record<string, unknown> | null;
+  invoice_items?: Array<{ description: string; quantity: number; meta?: Record<string, unknown> | null }> | null;
+}): InvoiceDeviceSummary {
+  const snapshot = (inv.snapshot ?? {}) as {
+    repair?: { device_brand?: string | null; device_model?: string | null; imei?: string | null };
+    stock?: { brand?: string | null; model?: string | null; storage?: string | null; imei?: string | null };
+  };
+
+  const firstItem = inv.invoice_items?.[0];
+
+  if (inv.kind === "REPAIR") {
+    const r = snapshot.repair;
+    const brand = r?.device_brand?.trim() || "";
+    const model = r?.device_model?.trim() || "";
+    const device = [brand, model].filter(Boolean).join(" ") || (firstItem?.description ?? "Repair");
+    const imei = r?.imei?.trim() || (firstItem?.meta ? String(firstItem.meta["imei"] ?? "").trim() : "") || null;
+    return { device: device || "Repair", imei: imei || null };
+  }
+
+  if (inv.kind === "PHONE_SALE" || inv.kind === "PHONE_PURCHASE") {
+    const s = snapshot.stock;
+    const brand = s?.brand?.trim() || "";
+    const model = s?.model?.trim() || "";
+    const storage = s?.storage?.trim() || (firstItem?.meta ? String(firstItem.meta["storage"] ?? "").trim() : "") || "";
+    const name = [brand, model].filter(Boolean).join(" ");
+    const device = name ? [name, storage].filter(Boolean).join(" ") : (firstItem?.description ?? "Handset");
+    const imei = s?.imei?.trim() || (firstItem?.meta ? String(firstItem.meta["imei"] ?? "").trim() : "") || null;
+    return { device: device || "Handset", imei: imei || null };
+  }
+
+  if (inv.kind === "PRODUCT_SALE") {
+    const items = inv.invoice_items ?? [];
+    if (items.length === 0 || !firstItem) {
+      return { device: "Product sale", imei: null };
+    }
+    if (items.length === 1) {
+      const qtyStr = firstItem.quantity > 1 ? ` ×${firstItem.quantity}` : "";
+      return { device: `${firstItem.description}${qtyStr}`, imei: null };
+    }
+    const rest = items.length - 1;
+    const summary = firstItem.quantity > 1
+      ? `${firstItem.description} ×${firstItem.quantity} + ${rest} more`
+      : `${firstItem.description} + ${rest} more`;
+    return { device: summary, imei: null };
+  }
+
+  return { device: "—", imei: null };
+}
+
 export type RepairInvoice = {
   id: string;
   repair_number: string;
@@ -141,7 +215,11 @@ export type Payment = {
   notes: string | null;
   is_reversal: boolean;
   created_at: string;
-  invoices?: { invoice_number: string; kind: string } | null;
+  invoices?: {
+    invoice_number: string;
+    kind: string;
+    customers?: { name: string; phone?: string | null } | null;
+  } | null;
 };
 
 /* -------------------------------- customers ------------------------------ */
@@ -169,10 +247,42 @@ export const customersQuery = (search: string) =>
 export const customerQuery = (id: string) =>
   queryOptions({
     queryKey: ["admin", "customer", id],
-    queryFn: async () =>
-      unwrap<Customer>(
-        await supabase.from("customers").select("*").eq("id", id).single(),
-      ),
+    queryFn: async (client) => {
+      const [customer, repairs, invoices, ledger] = await Promise.all([
+        supabase.from("customers").select("*").eq("id", id).single(),
+        supabase
+          .from("repair_invoices")
+          .select("*")
+          .eq("customer_id", id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("invoices")
+          .select("*")
+          .eq("customer_id", id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("customer_ledger_entries")
+          .select("*")
+          .eq("customer_id", id)
+          .order("created_at", { ascending: false }),
+      ]);
+      return {
+        customer: unwrap<Customer>(customer),
+        repairs: unwrap<RepairInvoice[]>(repairs),
+        invoices: unwrap<Invoice[]>(invoices),
+        ledger: unwrap<
+          {
+            id: string;
+            entry_type: string;
+            debit_pence: number;
+            credit_pence: number;
+            reference: string | null;
+            note: string | null;
+            created_at: string;
+          }[]
+        >(ledger),
+      };
+    },
   });
 
 export const customerActivityQuery = (id: string) =>
@@ -393,7 +503,9 @@ export const invoicesQuery = (filter: InvoiceFilter) =>
     queryFn: async () => {
       let q = supabase
         .from("invoices")
-        .select("*, customers(name, phone)")
+        .select(
+          "*, customers(name, phone), invoice_items(id, description, quantity, unit_price_pence, line_total_pence, meta)",
+        )
         .order("created_at", { ascending: false })
         .limit(100);
       if (filter.kind !== "all") q = q.eq("kind", filter.kind);
@@ -402,9 +514,7 @@ export const invoicesQuery = (filter: InvoiceFilter) =>
       if (filter.search.trim()) {
         q = q.ilike("invoice_number", `%${filter.search.trim()}%`);
       }
-      return unwrap<(Invoice & { customers: { name: string; phone: string } | null })[]>(
-        await q,
-      );
+      return unwrap<InvoiceWithDetails[]>(await q);
     },
   });
 
@@ -464,7 +574,7 @@ export const paymentsQuery = (period: "today" | "week" | "month" | "all") =>
     queryFn: async () => {
       let q = supabase
         .from("payments")
-        .select("*, invoices(invoice_number, kind)")
+        .select("*, invoices(invoice_number, kind, customers(name, phone))")
         .order("created_at", { ascending: false })
         .limit(150);
       if (period !== "all") q = q.gte("created_at", periodStart(period));

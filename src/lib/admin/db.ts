@@ -6,6 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
  * that looks like an internal detail is replaced with a generic line.
  */
 export function friendlyError(error: unknown): string {
+  if (typeof window !== "undefined" && error) {
+    console.error("[Database RPC Error]", error);
+  }
+
   const raw =
     typeof error === "string"
       ? error
@@ -15,31 +19,42 @@ export function friendlyError(error: unknown): string {
 
   if (!raw) return "Something went wrong. Please try again.";
 
+  const lower = raw.toLowerCase();
+
+  if (lower.includes("duplicate key")) {
+    if (lower.includes("imei")) return "This phone / IMEI is already in stock.";
+    if (lower.includes("sku")) return "An item with this SKU or barcode already exists.";
+    if (lower.includes("slug") || lower.includes("name")) return "An item with this name or slug already exists.";
+    return "A record with these unique details already exists.";
+  }
+
+  if (lower.includes("permission denied") || lower.includes("row-level security") || lower.includes("require_staff")) {
+    return "You do not have permission or your staff session expired. Please refresh and log in.";
+  }
+
+  if (lower.includes("null value in column")) {
+    if (lower.includes("name")) return "Please enter a valid product name.";
+    if (lower.includes("category")) return "Please select a valid category.";
+    if (lower.includes("price")) return "Please enter a valid price.";
+    return "Please fill in all required fields.";
+  }
+
+  if (lower.includes("invalid input syntax for type uuid")) {
+    return "Invalid category or record ID selected.";
+  }
+
   const internal = [
-    "permission denied",
-    "violates row-level security",
-    "row-level security",
-    "duplicate key value",
     "syntax error",
     "relation ",
     "column ",
     "function ",
     "JWT",
     "PGRST",
-    "invalid input syntax",
-    "null value in column",
     "violates check constraint",
     "violates foreign key",
   ];
-  const lower = raw.toLowerCase();
   if (internal.some((needle) => lower.includes(needle.toLowerCase()))) {
-    if (lower.includes("duplicate key") && lower.includes("imei")) {
-      return "This phone is already in stock.";
-    }
-    if (lower.includes("permission denied") || lower.includes("row-level security")) {
-      return "You do not have permission to perform this action.";
-    }
-    return "That could not be saved. Please check the details and try again.";
+    return "That could not be saved. Please check the entered values and try again.";
   }
   return raw;
 }
