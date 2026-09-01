@@ -16,7 +16,6 @@ import { businessQuery } from "@/lib/queries";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { MobileContactBar } from "@/components/site/MobileContactBar";
-import { CookieConsent } from "@/components/site/CookieConsent";
 import { OffersBanner } from "@/components/site/OffersBanner";
 import { LocalBusinessSchema } from "@/components/site/LocalBusinessSchema";
 import { Toaster } from "@/components/ui/sonner";
@@ -159,7 +158,6 @@ function RootComponent() {
         </main>
         <Footer />
         <MobileContactBar />
-        <CookieConsent />
         <LocalBusinessSchema />
       </div>
       <Toaster />
