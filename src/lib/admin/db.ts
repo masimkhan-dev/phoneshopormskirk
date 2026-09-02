@@ -76,6 +76,10 @@ export async function callRpc<T = unknown>(
     | "add_existing_phone_stock"
     | "update_stock_item"
     | "adjust_product_stock"
+    | "save_daily_sale"
+    | "void_daily_sale"
+    | "save_expense"
+    | "void_expense"
     | "set_user_role"
     | "ensure_profile",
   payload?: Record<string, unknown>,

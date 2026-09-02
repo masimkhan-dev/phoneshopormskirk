@@ -33,9 +33,11 @@ import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminBuyPhoneRouteImport } from './routes/_authenticated/admin.buy-phone'
 import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authenticated/admin.customers'
+import { Route as AuthenticatedAdminDailySalesRouteImport } from './routes/_authenticated/admin.daily-sales'
 import { Route as AuthenticatedAdminDayEndRouteImport } from './routes/_authenticated/admin.day-end'
 import { Route as AuthenticatedAdminDirectSaleRouteImport } from './routes/_authenticated/admin.direct-sale'
 import { Route as AuthenticatedAdminEnquiriesRouteImport } from './routes/_authenticated/admin.enquiries'
+import { Route as AuthenticatedAdminExpensesRouteImport } from './routes/_authenticated/admin.expenses'
 import { Route as AuthenticatedAdminInvoiceTermsRouteImport } from './routes/_authenticated/admin.invoice-terms'
 import { Route as AuthenticatedAdminNewRepairRouteImport } from './routes/_authenticated/admin.new-repair'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
@@ -173,6 +175,12 @@ const AuthenticatedAdminCustomersRoute =
     path: '/customers',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminDailySalesRoute =
+  AuthenticatedAdminDailySalesRouteImport.update({
+    id: '/daily-sales',
+    path: '/daily-sales',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminDayEndRoute =
   AuthenticatedAdminDayEndRouteImport.update({
     id: '/day-end',
@@ -189,6 +197,12 @@ const AuthenticatedAdminEnquiriesRoute =
   AuthenticatedAdminEnquiriesRouteImport.update({
     id: '/enquiries',
     path: '/enquiries',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminExpensesRoute =
+  AuthenticatedAdminExpensesRouteImport.update({
+    id: '/expenses',
+    path: '/expenses',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminInvoiceTermsRoute =
@@ -303,9 +317,11 @@ export interface FileRoutesByFullPath {
   '/shop/': typeof ShopIndexRoute
   '/admin/buy-phone': typeof AuthenticatedAdminBuyPhoneRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersRoute
+  '/admin/daily-sales': typeof AuthenticatedAdminDailySalesRoute
   '/admin/day-end': typeof AuthenticatedAdminDayEndRoute
   '/admin/direct-sale': typeof AuthenticatedAdminDirectSaleRoute
   '/admin/enquiries': typeof AuthenticatedAdminEnquiriesRoute
+  '/admin/expenses': typeof AuthenticatedAdminExpensesRoute
   '/admin/invoice-terms': typeof AuthenticatedAdminInvoiceTermsRoute
   '/admin/new-repair': typeof AuthenticatedAdminNewRepairRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -345,9 +361,11 @@ export interface FileRoutesByTo {
   '/shop': typeof ShopIndexRoute
   '/admin/buy-phone': typeof AuthenticatedAdminBuyPhoneRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersRoute
+  '/admin/daily-sales': typeof AuthenticatedAdminDailySalesRoute
   '/admin/day-end': typeof AuthenticatedAdminDayEndRoute
   '/admin/direct-sale': typeof AuthenticatedAdminDirectSaleRoute
   '/admin/enquiries': typeof AuthenticatedAdminEnquiriesRoute
+  '/admin/expenses': typeof AuthenticatedAdminExpensesRoute
   '/admin/invoice-terms': typeof AuthenticatedAdminInvoiceTermsRoute
   '/admin/new-repair': typeof AuthenticatedAdminNewRepairRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -390,9 +408,11 @@ export interface FileRoutesById {
   '/shop/': typeof ShopIndexRoute
   '/_authenticated/admin/buy-phone': typeof AuthenticatedAdminBuyPhoneRoute
   '/_authenticated/admin/customers': typeof AuthenticatedAdminCustomersRoute
+  '/_authenticated/admin/daily-sales': typeof AuthenticatedAdminDailySalesRoute
   '/_authenticated/admin/day-end': typeof AuthenticatedAdminDayEndRoute
   '/_authenticated/admin/direct-sale': typeof AuthenticatedAdminDirectSaleRoute
   '/_authenticated/admin/enquiries': typeof AuthenticatedAdminEnquiriesRoute
+  '/_authenticated/admin/expenses': typeof AuthenticatedAdminExpensesRoute
   '/_authenticated/admin/invoice-terms': typeof AuthenticatedAdminInvoiceTermsRoute
   '/_authenticated/admin/new-repair': typeof AuthenticatedAdminNewRepairRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
@@ -435,9 +455,11 @@ export interface FileRouteTypes {
     | '/shop/'
     | '/admin/buy-phone'
     | '/admin/customers'
+    | '/admin/daily-sales'
     | '/admin/day-end'
     | '/admin/direct-sale'
     | '/admin/enquiries'
+    | '/admin/expenses'
     | '/admin/invoice-terms'
     | '/admin/new-repair'
     | '/admin/payments'
@@ -477,9 +499,11 @@ export interface FileRouteTypes {
     | '/shop'
     | '/admin/buy-phone'
     | '/admin/customers'
+    | '/admin/daily-sales'
     | '/admin/day-end'
     | '/admin/direct-sale'
     | '/admin/enquiries'
+    | '/admin/expenses'
     | '/admin/invoice-terms'
     | '/admin/new-repair'
     | '/admin/payments'
@@ -521,9 +545,11 @@ export interface FileRouteTypes {
     | '/shop/'
     | '/_authenticated/admin/buy-phone'
     | '/_authenticated/admin/customers'
+    | '/_authenticated/admin/daily-sales'
     | '/_authenticated/admin/day-end'
     | '/_authenticated/admin/direct-sale'
     | '/_authenticated/admin/enquiries'
+    | '/_authenticated/admin/expenses'
     | '/_authenticated/admin/invoice-terms'
     | '/_authenticated/admin/new-repair'
     | '/_authenticated/admin/payments'
@@ -735,6 +761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCustomersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/daily-sales': {
+      id: '/_authenticated/admin/daily-sales'
+      path: '/daily-sales'
+      fullPath: '/admin/daily-sales'
+      preLoaderRoute: typeof AuthenticatedAdminDailySalesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/day-end': {
       id: '/_authenticated/admin/day-end'
       path: '/day-end'
@@ -754,6 +787,13 @@ declare module '@tanstack/react-router' {
       path: '/enquiries'
       fullPath: '/admin/enquiries'
       preLoaderRoute: typeof AuthenticatedAdminEnquiriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/expenses': {
+      id: '/_authenticated/admin/expenses'
+      path: '/expenses'
+      fullPath: '/admin/expenses'
+      preLoaderRoute: typeof AuthenticatedAdminExpensesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/invoice-terms': {
@@ -867,9 +907,11 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBuyPhoneRoute: typeof AuthenticatedAdminBuyPhoneRoute
   AuthenticatedAdminCustomersRoute: typeof AuthenticatedAdminCustomersRoute
+  AuthenticatedAdminDailySalesRoute: typeof AuthenticatedAdminDailySalesRoute
   AuthenticatedAdminDayEndRoute: typeof AuthenticatedAdminDayEndRoute
   AuthenticatedAdminDirectSaleRoute: typeof AuthenticatedAdminDirectSaleRoute
   AuthenticatedAdminEnquiriesRoute: typeof AuthenticatedAdminEnquiriesRoute
+  AuthenticatedAdminExpensesRoute: typeof AuthenticatedAdminExpensesRoute
   AuthenticatedAdminInvoiceTermsRoute: typeof AuthenticatedAdminInvoiceTermsRoute
   AuthenticatedAdminNewRepairRoute: typeof AuthenticatedAdminNewRepairRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
@@ -891,9 +933,11 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBuyPhoneRoute: AuthenticatedAdminBuyPhoneRoute,
   AuthenticatedAdminCustomersRoute: AuthenticatedAdminCustomersRoute,
+  AuthenticatedAdminDailySalesRoute: AuthenticatedAdminDailySalesRoute,
   AuthenticatedAdminDayEndRoute: AuthenticatedAdminDayEndRoute,
   AuthenticatedAdminDirectSaleRoute: AuthenticatedAdminDirectSaleRoute,
   AuthenticatedAdminEnquiriesRoute: AuthenticatedAdminEnquiriesRoute,
+  AuthenticatedAdminExpensesRoute: AuthenticatedAdminExpensesRoute,
   AuthenticatedAdminInvoiceTermsRoute: AuthenticatedAdminInvoiceTermsRoute,
   AuthenticatedAdminNewRepairRoute: AuthenticatedAdminNewRepairRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,

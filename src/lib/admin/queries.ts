@@ -39,6 +39,48 @@ export type Supplier = {
   created_at: string;
 };
 
+export type ExpenseCategory =
+  | "RENT"
+  | "WAGES"
+  | "UTILITIES"
+  | "PARTS"
+  | "STOCK_SUPPLIES"
+  | "MARKETING"
+  | "TRANSPORT"
+  | "SOFTWARE"
+  | "BANK_FEES"
+  | "OTHER";
+
+export type Expense = {
+  id: string;
+  expense_date: string;
+  category: ExpenseCategory | string;
+  description: string;
+  amount_pence: number;
+  payment_method: "CASH" | "CARD" | "BANK_TRANSFER" | "OTHER" | string;
+  reference: string | null;
+  notes: string | null;
+  status: "ACTIVE" | "VOIDED";
+  void_reason: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DailySale = {
+  id: string;
+  entry_date: string;
+  staff_name: string;
+  cash_sale_pence: number;
+  card_sale_pence: number;
+  description: string | null;
+  status: "ACTIVE" | "VOIDED";
+  void_reason: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Invoice = {
   id: string;
   invoice_number: string;
@@ -868,7 +910,10 @@ export const reportsQuery = (from: string, to: string) =>
   queryOptions({
     queryKey: ["admin", "reports", from, to],
     queryFn: async () => {
-      const [invoices, sales, saleItems, repairs, purchases, payments, stock, products] =
+      const fromDay = from.slice(0, 10);
+      const toDay = to.slice(0, 10);
+
+      const [invoices, sales, saleItems, repairs, purchases, payments, stock, products, dailySales, expenses] =
         await Promise.all([
           supabase
             .from("invoices")
@@ -908,6 +953,16 @@ export const reportsQuery = (from: string, to: string) =>
           supabase
             .from("products")
             .select("id,name,quantity,reorder_level,cost_price_pence,price_pence,active"),
+          supabase
+            .from("daily_sales")
+            .select("*")
+            .gte("entry_date", fromDay)
+            .lte("entry_date", toDay),
+          supabase
+            .from("expenses")
+            .select("*")
+            .gte("expense_date", fromDay)
+            .lte("expense_date", toDay),
         ]);
       return {
         invoices: unwrap<Invoice[]>(invoices),
@@ -939,6 +994,8 @@ export const reportsQuery = (from: string, to: string) =>
         >(payments),
         stock: unwrap<StockItem[]>(stock),
         products: unwrap<AdminProduct[]>(products),
+        dailySales: unwrap<DailySale[]>(dailySales),
+        expenses: unwrap<Expense[]>(expenses),
       };
     },
   });
@@ -995,6 +1052,66 @@ export const staffQuery = queryOptions({
   },
 });
 
+/* ------------------------------- daily sales ------------------------------- */
+
+export const dailySalesQuery = (from: string, to: string) =>
+  queryOptions({
+    queryKey: ["admin", "daily-sales", from, to],
+    queryFn: async () => {
+      const [sales, expenses] = await Promise.all([
+        supabase
+          .from("daily_sales")
+          .select("*")
+          .gte("entry_date", from)
+          .lte("entry_date", to)
+          .order("entry_date", { ascending: false })
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("expenses")
+          .select("*")
+          .gte("expense_date", from)
+          .lte("expense_date", to)
+          .order("expense_date", { ascending: false }),
+      ]);
+      return {
+        dailySales: unwrap<DailySale[]>(sales),
+        expenses: unwrap<Expense[]>(expenses),
+      };
+    },
+  });
+
+export const distinctStaffNamesQuery = queryOptions({
+  queryKey: ["admin", "daily-sales", "staff-names"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("daily_sales")
+      .select("staff_name")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(friendlyError(error));
+    const raw = (data ?? []) as { staff_name: string }[];
+    const names = Array.from(new Set(raw.map((r) => r.staff_name.trim()).filter(Boolean)));
+    return names;
+  },
+});
+
+/* --------------------------------- expenses -------------------------------- */
+
+export const expensesQuery = (from?: string, to?: string) =>
+  queryOptions({
+    queryKey: ["admin", "expenses", from ?? "all", to ?? "all"],
+    queryFn: async () => {
+      let query = supabase
+        .from("expenses")
+        .select("*")
+        .order("expense_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (from) query = query.gte("expense_date", from);
+      if (to) query = query.lte("expense_date", to);
+      return unwrap<Expense[]>(await query);
+    },
+  });
+
 /* ------------------------------- day end ---------------------------------- */
 
 export const dayEndQuery = (day: string) =>
@@ -1003,7 +1120,7 @@ export const dayEndQuery = (day: string) =>
     queryFn: async () => {
       const start = new Date(`${day}T00:00:00`).toISOString();
       const end = new Date(`${day}T23:59:59.999`).toISOString();
-      const [payments, invoices] = await Promise.all([
+      const [payments, invoices, dailySales, expenses] = await Promise.all([
         supabase
           .from("payments")
           .select("*, invoices(invoice_number, kind)")
@@ -1016,6 +1133,16 @@ export const dayEndQuery = (day: string) =>
           .gte("created_at", start)
           .lte("created_at", end)
           .order("created_at"),
+        supabase
+          .from("daily_sales")
+          .select("*")
+          .eq("entry_date", day)
+          .eq("status", "ACTIVE"),
+        supabase
+          .from("expenses")
+          .select("*")
+          .eq("expense_date", day)
+          .eq("status", "ACTIVE"),
       ]);
       return {
         payments: unwrap<Payment[]>(payments),
@@ -1032,6 +1159,8 @@ export const dayEndQuery = (day: string) =>
             | "created_at"
           >[]
         >(invoices),
+        dailySales: unwrap<DailySale[]>(dailySales),
+        expenses: unwrap<Expense[]>(expenses),
       };
     },
   });

@@ -47,6 +47,96 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_sales: {
+        Row: {
+          id: string
+          entry_date: string
+          staff_name: string
+          cash_sale_pence: number
+          card_sale_pence: number
+          description: string | null
+          status: string
+          void_reason: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          entry_date?: string
+          staff_name: string
+          cash_sale_pence?: number
+          card_sale_pence?: number
+          description?: string | null
+          status?: string
+          void_reason?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          entry_date?: string
+          staff_name?: string
+          cash_sale_pence?: number
+          card_sale_pence?: number
+          description?: string | null
+          status?: string
+          void_reason?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          id: string
+          expense_date: string
+          category: string
+          description: string
+          amount_pence: number
+          payment_method: string
+          reference: string | null
+          notes: string | null
+          status: string
+          void_reason: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          expense_date?: string
+          category?: string
+          description: string
+          amount_pence: number
+          payment_method?: string
+          reference?: string | null
+          notes?: string | null
+          status?: string
+          void_reason?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          expense_date?: string
+          category?: string
+          description?: string
+          amount_pence?: number
+          payment_method?: string
+          reference?: string | null
+          notes?: string | null
+          status?: string
+          void_reason?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
           address_line1: string | null

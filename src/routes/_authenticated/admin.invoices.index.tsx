@@ -17,7 +17,7 @@ import {
 } from "@/components/admin/ui";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ukDateTime } from "@/lib/admin/money";
+import { money, ukDateTime } from "@/lib/admin/money";
 import {
   getInvoiceDeviceSummary,
   invoicesQuery,
@@ -59,12 +59,123 @@ function Invoices() {
     });
   }, [data, filter.search]);
 
+  // Operational summary totals derived from the filtered invoice dataset
+  const totals = useMemo(() => {
+    const active = filteredData.filter((inv) => inv.status !== "VOID");
+
+    let repairTotal = 0;
+    let phoneSaleTotal = 0;
+    let productSaleTotal = 0;
+    let phoneBoughtTotal = 0;
+    let totalPaid = 0;
+    let outstanding = 0;
+
+    for (const inv of active) {
+      if (inv.kind === "REPAIR") {
+        repairTotal += inv.total_pence;
+      } else if (inv.kind === "PHONE_SALE") {
+        phoneSaleTotal += inv.total_pence;
+      } else if (inv.kind === "PRODUCT_SALE") {
+        productSaleTotal += inv.total_pence;
+      } else if (inv.kind === "PHONE_PURCHASE") {
+        phoneBoughtTotal += inv.total_pence;
+      }
+
+      totalPaid += inv.amount_paid_pence;
+      outstanding += inv.balance_pence;
+    }
+
+    return {
+      count: filteredData.length,
+      activeCount: active.length,
+      repairTotal,
+      phoneSaleTotal,
+      productSaleTotal,
+      phoneBoughtTotal,
+      totalPaid,
+      outstanding,
+    };
+  }, [filteredData]);
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Invoices"
         description="Every repair, sale, phone purchase and retail document with device snapshots."
       />
+
+      {/* Compact Operational Totals Cards with Category Colors */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+        {/* Total Invoices - Neutral/Slate */}
+        <div className="admin-card rounded-lg border border-slate-300/70 dark:border-slate-700/60 bg-slate-500/5 dark:bg-slate-900/30 p-2.5 space-y-0.5 shadow-xs">
+          <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+            Total Invoices
+          </p>
+          <p className="text-lg font-extrabold text-foreground">
+            {totals.count}
+          </p>
+        </div>
+
+        {/* Repairs - Blue */}
+        <div className="admin-card rounded-lg border border-blue-500/30 bg-blue-500/5 dark:bg-blue-950/20 p-2.5 space-y-0.5 shadow-xs">
+          <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+            Repairs
+          </p>
+          <p className="text-lg font-extrabold text-blue-700 dark:text-blue-300">
+            {money(totals.repairTotal)}
+          </p>
+        </div>
+
+        {/* Phone Sales - Purple */}
+        <div className="admin-card rounded-lg border border-purple-500/30 bg-purple-500/5 dark:bg-purple-950/20 p-2.5 space-y-0.5 shadow-xs">
+          <p className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+            Phone Sales
+          </p>
+          <p className="text-lg font-extrabold text-purple-700 dark:text-purple-300">
+            {money(totals.phoneSaleTotal)}
+          </p>
+        </div>
+
+        {/* Products - Amber */}
+        <div className="admin-card rounded-lg border border-amber-500/30 bg-amber-500/5 dark:bg-amber-950/20 p-2.5 space-y-0.5 shadow-xs">
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+            Products
+          </p>
+          <p className="text-lg font-extrabold text-amber-700 dark:text-amber-300">
+            {money(totals.productSaleTotal)}
+          </p>
+        </div>
+
+        {/* Phones Bought - Teal */}
+        <div className="admin-card rounded-lg border border-teal-500/30 bg-teal-500/5 dark:bg-teal-950/20 p-2.5 space-y-0.5 shadow-xs">
+          <p className="text-[11px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+            Phones Bought
+          </p>
+          <p className="text-lg font-extrabold text-teal-700 dark:text-teal-300">
+            {money(totals.phoneBoughtTotal)}
+          </p>
+        </div>
+
+        {/* Total Paid - Emerald */}
+        <div className="admin-card rounded-lg border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-950/20 p-2.5 space-y-0.5 shadow-xs">
+          <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+            Total Paid
+          </p>
+          <p className="text-lg font-extrabold text-emerald-700 dark:text-emerald-300">
+            {money(totals.totalPaid)}
+          </p>
+        </div>
+
+        {/* Outstanding - Rose */}
+        <div className="admin-card rounded-lg border border-rose-500/30 bg-rose-500/5 dark:bg-rose-950/20 p-2.5 space-y-0.5 shadow-xs">
+          <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+            Outstanding
+          </p>
+          <p className={`text-lg font-extrabold ${totals.outstanding > 0 ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground"}`}>
+            {money(totals.outstanding)}
+          </p>
+        </div>
+      </div>
 
       {/* Compact Filter Toolbar */}
       <div className="admin-card flex flex-wrap items-center justify-between gap-3 p-3">

@@ -38,30 +38,45 @@ function DayEnd() {
 
   const summary = useMemo(() => {
     const payments = data?.payments ?? [];
+    const dailySales = data?.dailySales ?? [];
+    const expenses = data?.expenses ?? [];
+
+    const cashSale = dailySales.reduce((s, d) => s + d.cash_sale_pence, 0);
+    const cardSale = dailySales.reduce((s, d) => s + d.card_sale_pence, 0);
+    const totalTakings = cashSale + cardSale;
+
+    // Cash expenses from authoritative expenses table
+    const cashExpenses = expenses
+      .filter((e) => e.payment_method === "CASH")
+      .reduce((s, e) => s + e.amount_pence, 0);
+
+    const totalExpenses = expenses.reduce((s, e) => s + e.amount_pence, 0);
+
+    const cashExpected = cashSale - cashExpenses;
+    const net = totalTakings - totalExpenses;
+
+    const refunds = payments
+      .filter((p) => p.direction === "OUT" && p.notes?.startsWith("Refund:"))
+      .reduce((s, p) => s + p.amount_pence, 0);
+
     const byMethod: Record<string, { in: number; out: number }> = {};
     for (const p of payments) {
       const row = (byMethod[p.method] ??= { in: 0, out: 0 });
       if (p.direction === "IN") row.in += p.amount_pence;
       else row.out += p.amount_pence;
     }
-    const takings = payments
-      .filter((p) => p.direction === "IN")
-      .reduce((s, p) => s + p.amount_pence, 0);
-    const paidOut = payments
-      .filter((p) => p.direction === "OUT")
-      .reduce((s, p) => s + p.amount_pence, 0);
-    const cashIn = byMethod["CASH"]?.in ?? 0;
-    const cashOut = byMethod["CASH"]?.out ?? 0;
-    const refunds = payments
-      .filter((p) => p.direction === "OUT" && p.notes?.startsWith("Refund:"))
-      .reduce((s, p) => s + p.amount_pence, 0);
+
     return {
       byMethod,
-      takings,
-      paidOut,
-      net: takings - paidOut,
-      cashExpected: cashIn - cashOut,
+      cashSale,
+      cardSale,
+      takings: totalTakings,
+      cashExpenses,
+      totalExpenses,
+      net,
+      cashExpected,
       refunds,
+      dailySalesCount: dailySales.length,
     };
   }, [data]);
 
@@ -102,6 +117,20 @@ function DayEnd() {
             </div>
           }
         />
+
+        {/* Transition Notice */}
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs text-foreground flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-2 rounded-full bg-primary" />
+            <span className="font-medium">
+              Sales totals and cash-up figures are currently based on <strong>Daily Sales entries</strong> during the stock transition period.
+            </span>
+          </div>
+          <span className="text-muted-foreground font-semibold">
+            {summary.dailySalesCount} daily entry recorded
+          </span>
+        </div>
+
         <div className="admin-card flex flex-wrap items-end gap-4 p-4">
           <Field label="Day" htmlFor="day">
             <Input
@@ -123,7 +152,7 @@ function DayEnd() {
             />
           </Field>
           <div className="ml-auto text-right">
-            <p className="admin-label">Cash expected</p>
+            <p className="admin-label">Cash expected in till</p>
             <p className="text-xl font-extrabold tabular-nums">
               {money(summary.cashExpected)}
             </p>
@@ -146,14 +175,10 @@ function DayEnd() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Money taken" value={money(summary.takings)} sub="All methods" />
-            <StatCard
-              label="Money paid out"
-              value={money(summary.paidOut)}
-              sub="Phone purchases and refunds"
-            />
-            <StatCard label="Refunds" value={money(summary.refunds)} />
-            <StatCard label="Net for the day" value={money(summary.net)} />
+            <StatCard label="Cash Sales" value={money(summary.cashSale)} sub="From Daily Sales" />
+            <StatCard label="Card Sales" value={money(summary.cardSale)} sub="From Daily Sales" />
+            <StatCard label="Total Expenses" value={money(summary.totalExpenses)} sub="From Expenses module" />
+            <StatCard label="Net for the day" value={money(summary.net)} sub="Sales less expenses" />
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">

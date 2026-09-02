@@ -48,13 +48,21 @@ function Reports() {
   const repairsLive = live(data?.repairs ?? []);
   const purchasesLive = live(data?.purchases ?? []);
 
+  const liveDailySales = (data?.dailySales ?? []).filter((s) => s.status !== "VOIDED");
+  const liveExpenses = (data?.expenses ?? []).filter((e) => e.status !== "VOIDED");
+
+  const totalCashSales = liveDailySales.reduce((s, r) => s + r.cash_sale_pence, 0);
+  const totalCardSales = liveDailySales.reduce((s, r) => s + r.card_sale_pence, 0);
+  const totalDailyRevenue = totalCashSales + totalCardSales;
+  const totalOperatingExpenses = liveExpenses.reduce((s, e) => s + e.amount_pence, 0);
+  const netSurplus = totalDailyRevenue - totalOperatingExpenses;
+
+  // Operational metrics (preserved for operational monitoring)
   const salesRevenue = salesLive.reduce((s, r) => s + r.total_pence, 0);
   const salesCost = salesLive.reduce((s, r) => s + r.cost_pence, 0);
   const repairRevenue = repairsLive.reduce((s, r) => s + r.total_pence, 0);
   const outstanding = repairsLive.reduce((s, r) => s + r.balance_pence, 0);
   const spentOnPhones = purchasesLive.reduce((s, r) => s + r.total_pence, 0);
-  const revenue = salesRevenue + repairRevenue;
-  const grossProfit = salesRevenue - salesCost + repairRevenue;
 
   const stock = data?.stock ?? [];
   const inStock = stock.filter((s) => s.status === "IN_STOCK");
@@ -101,6 +109,19 @@ function Reports() {
         description="Revenue, profit and stock health for the period you choose."
       />
 
+      {/* Transition Notice */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs text-foreground flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex size-2 rounded-full bg-primary" />
+          <span className="font-medium">
+            Sales totals and financial revenue figures are currently based on <strong>Daily Sales entries</strong> during the stock transition period.
+          </span>
+        </div>
+        <span className="text-muted-foreground font-semibold">
+          {liveDailySales.length} daily entries in period
+        </span>
+      </div>
+
       <div className="admin-card flex flex-wrap items-end gap-4 p-4">
         <FilterPills
           value={preset}
@@ -113,15 +134,20 @@ function Reports() {
           ]}
         />
         {preset === "custom" && (
-          <div className="flex items-end gap-2">
-            <div>
-              <p className="admin-label mb-1">From</p>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </div>
-            <div>
-              <p className="admin-label mb-1">To</p>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              className="h-9 w-36"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+            <span className="text-muted-foreground">to</span>
+            <Input
+              type="date"
+              className="h-9 w-36"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
           </div>
         )}
       </div>
@@ -131,38 +157,62 @@ function Reports() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Total revenue" value={money(revenue)} sub="Repairs plus sales" />
-            <StatCard label="Gross profit" value={money(grossProfit)} sub="After stock cost" />
-            <StatCard label="Spent buying phones" value={money(spentOnPhones)} />
-            <StatCard label="Owed by customers" value={money(outstanding)} sub="Unpaid balances" />
+            <StatCard
+              label="Total Revenue"
+              value={money(totalDailyRevenue)}
+              sub={`Cash: ${money(totalCashSales)} · Card: ${money(totalCardSales)}`}
+            />
+            <StatCard
+              label="Operating Expenses"
+              value={money(totalOperatingExpenses)}
+              sub="From Expenses module"
+            />
+            <StatCard
+              label="Net Surplus"
+              value={money(netSurplus)}
+              sub="Sales less expenses"
+            />
+            <StatCard
+              label="Stock Value Held"
+              value={money(stockValue)}
+              sub={`${inStock.length} phones in inventory`}
+            />
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <Section title="Where the money came from">
+            <Section title="Financial Breakdown (Daily Sales Master)">
               <TableShell minWidth={false} tableClassName="w-full table-fixed">
                 <tbody>
                   <tr>
-                    <Td className="truncate">Repairs</Td>
+                    <Td className="truncate">Cash Sales</Td>
                     <Td className="text-right">
-                      <Money pence={repairRevenue} />
+                      <Money pence={totalCashSales} />
                     </Td>
                   </tr>
                   <tr>
-                    <Td className="truncate">Phone and product sales</Td>
+                    <Td className="truncate">Card Sales</Td>
                     <Td className="text-right">
-                      <Money pence={salesRevenue} />
+                      <Money pence={totalCardSales} />
                     </Td>
                   </tr>
-                  <tr>
-                    <Td className="truncate">Cost of items sold</Td>
-                    <Td className="text-right">
-                      −<Money pence={salesCost} />
+                  <tr className="bg-muted/30 font-semibold">
+                    <Td className="truncate">Total Daily Sales</Td>
+                    <Td className="text-right font-bold text-foreground">
+                      <Money pence={totalDailyRevenue} />
                     </Td>
                   </tr>
-                  <tr className="bg-surface">
-                    <Td className="truncate font-extrabold">Gross profit</Td>
-                    <Td className="text-right font-extrabold">
-                      <Money pence={grossProfit} />
+                  {totalOperatingExpenses > 0 && (
+                    <tr>
+                      <Td className="truncate">Operating Expenses</Td>
+                      <Td className="text-right text-destructive">
+                        −<Money pence={totalOperatingExpenses} />
+                      </Td>
+                    </tr>
+                  )}
+                  <tr className="bg-surface font-extrabold">
+                    <Td className="truncate">Net Period Surplus</Td>
+                    <Td className={`text-right font-extrabold ${netSurplus >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                      <Money pence={netSurplus} />
                     </Td>
                   </tr>
                 </tbody>
