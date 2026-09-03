@@ -77,7 +77,7 @@ const DEFAULT_FAQS = [
     id: "f9",
     question: "Where is the shop?",
     answer:
-      "Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in Ormskirk town centre, a short walk from the bus station.",
+      "Find us at 4 Aughton Street Ormskirk L39 3BW in Ormskirk town centre, exactly opposite Costa Coffee.",
     topic: "GENERAL",
     sort_order: 90,
   },

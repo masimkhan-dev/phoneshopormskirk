@@ -21,14 +21,14 @@ export const Route = createFileRoute("/repairs")({
           "Screen, battery, charging port and camera repairs in Ormskirk town centre. Quote before any work begins. Walk in or WhatsApp us.",
       },
       { property: "og:title", content: "Phone Repair Ormskirk — Screen, Battery, Port" },
-      { property: "og:url", content: "/repairs" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/repairs" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",
         content: "Screens, batteries, charging ports, cameras and water damage — repaired locally in Ormskirk.",
       },
     ],
-    links: [{ rel: "canonical", href: "/repairs" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/repairs" }],
   }),
   component: RepairsPage,
 });

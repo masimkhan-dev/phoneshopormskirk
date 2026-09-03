@@ -16,5 +16,4 @@ Disallow: /admin
 Disallow: /auth
 Disallow: /reset-password
 Disallow: /forgot-password
-
-Sitemap: /sitemap.xml
+Sitemap: https://www.phonestoreormskirk.co.uk/sitemap.xml

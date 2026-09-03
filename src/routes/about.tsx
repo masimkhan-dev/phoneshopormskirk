@@ -14,14 +14,14 @@ export const Route = createFileRoute("/about")({
           "Independent phone shop at 4 Aughton St, Ormskirk. Repairs, sales and honest advice. Rated 4.8 on Google.",
       },
       { property: "og:title", content: "About Phone Shop Ormskirk — 4 Aughton St" },
-      { property: "og:url", content: "/about" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/about" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",
         content: "An independent Ormskirk phone shop built on honest advice and quality repairs.",
       },
     ],
-    links: [{ rel: "canonical", href: "/about" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/about" }],
   }),
   component: AboutPage,
 });

@@ -17,14 +17,14 @@ export const Route = createFileRoute("/sell-your-phone")({
           "Sell or trade in your working or faulty phone at 4 Aughton St. Free valuation, no obligation to sell.",
       },
       { property: "og:title", content: "Sell Your Phone Ormskirk — Cash Today" },
-      { property: "og:url", content: "/sell-your-phone" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/sell-your-phone" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",
         content: "Free valuations for working and faulty handsets at our Ormskirk shop.",
       },
     ],
-    links: [{ rel: "canonical", href: "/sell-your-phone" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/sell-your-phone" }],
   }),
   component: SellPage,
 });
@@ -67,7 +67,7 @@ function SellPage() {
               src={heroDevices}
               loading="lazy"
               decoding="async"
-              alt="Pre-owned smartphones ready for valuation at Phone Shop Ormskirk"
+              alt="Smartphones ready for valuation at Phone Shop Ormskirk"
               className="aspect-4/3 size-full object-cover"
             />
           </div>
@@ -154,7 +154,7 @@ function SellPage() {
           <p className="text-base text-muted-foreground">
             Looking to buy instead?{" "}
             <Link to="/shop" className="font-bold text-primary underline underline-offset-4">
-              Browse our stock of pre-owned phones and accessories
+              Browse our stock of phones and accessories
             </Link>{" "}
             or{" "}
             <Link to="/contact" className="font-bold text-primary underline underline-offset-4">

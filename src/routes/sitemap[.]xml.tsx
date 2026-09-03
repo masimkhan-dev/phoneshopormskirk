@@ -20,7 +20,10 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const origin = new URL(request.url).origin;
+        const reqOrigin = new URL(request.url).origin;
+        const origin = reqOrigin.includes("localhost")
+          ? reqOrigin
+          : "https://www.phonestoreormskirk.co.uk";
         const today = new Date().toISOString().slice(0, 10);
         const urls = PATHS.map(
           (p) =>

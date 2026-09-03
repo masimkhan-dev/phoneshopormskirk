@@ -12,21 +12,21 @@ import { Reveal } from "@/components/site/Reveal";
 export const Route = createFileRoute("/shop/")({
   head: () => ({
     meta: [
-      { title: "Pre-Owned Phones & Accessories Ormskirk | Phone Shop" },
+      { title: "Mobile Phones & Accessories Ormskirk | Phone Shop" },
       {
         name: "description",
         content:
           "Checked used iPhones, Samsung handsets, cases, chargers and earbuds in Ormskirk. Message before visiting to confirm stock.",
       },
-      { property: "og:title", content: "Pre-Owned Phones & Accessories Ormskirk" },
+      { property: "og:title", content: "Mobile Phones & Accessories Ormskirk | Phone Shop" },
       {
         property: "og:description",
         content: "Refurbished phones and everyday accessories, in stock at Phone Shop Ormskirk.",
       },
-      { property: "og:url", content: "/shop" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/shop" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/shop" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/shop" }],
   }),
   component: ShopPage,
 });

@@ -23,8 +23,9 @@ export const Route = createFileRoute("/unlocking")({
         content:
           "Network unlocking handled in store at 4 Aughton St, Ormskirk — most makes and models.",
       },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/unlocking" },
     ],
-    links: [{ rel: "canonical", href: "/unlocking" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/unlocking" }],
   }),
   component: UnlockingPage,
 });

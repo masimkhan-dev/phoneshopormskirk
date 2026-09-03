@@ -23,10 +23,10 @@ export const Route = createFileRoute("/reviews")({
         property: "og:description",
         content: "Real Google reviews from Ormskirk customers, plus a link to our full listing.",
       },
-      { property: "og:url", content: "/reviews" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/reviews" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/reviews" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/reviews" }],
   }),
   component: ReviewsPage,
 });

@@ -25,10 +25,10 @@ export const Route = createFileRoute("/contact")({
         property: "og:description",
         content: "Opening hours, address, phone number and directions to our Ormskirk shop.",
       },
-      { property: "og:url", content: "/contact" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/contact" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/contact" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/contact" }],
   }),
   component: ContactPage,
 });
@@ -44,9 +44,9 @@ function ContactPage() {
           <span className="eyebrow-on-brand">Contact</span>
           <h1 className="display-1 mt-4 max-w-3xl">Find Phone Shop Ormskirk</h1>
           <p className="mt-5 max-w-2xl text-lg text-on-brand/85">
-            Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee, a short walk
-            from the bus station, with town centre parking nearby. WhatsApp is the quickest way to
-            reach us — we're usually mid-repair, but we'll always get back to you.
+            Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in Ormskirk
+            town centre, with parking nearby. WhatsApp is the quickest way to reach us — we're usually
+            mid-repair, but we'll always get back to you.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -104,10 +104,9 @@ function ContactPage() {
             <div>
               <h2 className="display-3 font-extrabold">Getting here</h2>
               <p className="mt-3 text-sm text-muted-foreground">
-                Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in the town
-                centre, a short walk from the bus station with town centre parking close by. We
-                regularly help customers from Ormskirk, Aughton, Burscough, Skelmersdale, Southport
-                and the surrounding villages.
+                Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in Ormskirk
+                town centre, with town centre parking close by. We regularly help customers from
+                Ormskirk, Aughton, Burscough, Skelmersdale, Southport and the surrounding villages.
               </p>
             </div>
 

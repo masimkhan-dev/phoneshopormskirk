@@ -26,6 +26,17 @@ export const Route = createFileRoute("/shop/$slug")({
           property: "og:description",
           content: `${name} available in our Ormskirk store.`,
         },
+        {
+          property: "og:url",
+          content: `https://www.phonestoreormskirk.co.uk/shop/${params.slug}`,
+        },
+        { property: "og:type", content: "website" },
+      ],
+      links: [
+        {
+          rel: "canonical",
+          href: `https://www.phonestoreormskirk.co.uk/shop/${params.slug}`,
+        },
       ],
     };
   },

@@ -17,10 +17,10 @@ export const Route = createFileRoute("/terms")({
         property: "og:description",
         content: "Quotes, repairs, devices, payment and your statutory rights.",
       },
-      { property: "og:url", content: "/terms" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/terms" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/terms" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/terms" }],
   }),
   component: TermsPage,
 });

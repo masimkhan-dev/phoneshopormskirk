@@ -20,10 +20,10 @@ export const Route = createFileRoute("/faq")({
         property: "og:description",
         content: "Answers on quotes, timescales, data, payment and selling your phone.",
       },
-      { property: "og:url", content: "/faq" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/faq" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/faq" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/faq" }],
   }),
   loader: async ({ context }) => {
     // Prefetch so the FAQPage JSON-LD is present in the server-rendered HTML.

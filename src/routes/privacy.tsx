@@ -18,10 +18,10 @@ export const Route = createFileRoute("/privacy")({
         property: "og:description",
         content: "How we handle your personal data and device data under UK GDPR.",
       },
-      { property: "og:url", content: "/privacy" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/privacy" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/privacy" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/privacy" }],
   }),
   component: PrivacyPage,
 });

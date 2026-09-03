@@ -26,10 +26,10 @@ export const Route = createFileRoute("/phone-repair-ormskirk")({
         content:
           "An independent Ormskirk repair shop for screens, batteries, charging ports and unlocking.",
       },
-      { property: "og:url", content: "/phone-repair-ormskirk" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/phone-repair-ormskirk" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/phone-repair-ormskirk" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/phone-repair-ormskirk" }],
   }),
   component: LocalPage,
 });

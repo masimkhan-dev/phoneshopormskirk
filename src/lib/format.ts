@@ -88,7 +88,7 @@ export type OpenState = {
   open: boolean;
   /** Short badge text, e.g. "Open now" / "Closed" */
   status: string;
-  /** Supporting detail, e.g. "Until 17:30" or "Opens Monday 09:30" */
+  /** Supporting detail, e.g. "Until 19:30" or "Opens Monday 09:30" */
   detail: string;
 };
 
@@ -182,6 +182,7 @@ export function localBusinessSchema(b: BusinessSettings | null | undefined) {
     "@type": ["LocalBusiness", "MobilePhoneStore"],
     priceRange: "£",
     name: b?.business_name ?? "Phone Shop Ormskirk",
+    url: "https://www.phonestoreormskirk.co.uk/",
     description:
       b?.tagline ?? "Phone repairs, unlocking, used phones and accessories in Ormskirk.",
     address: {

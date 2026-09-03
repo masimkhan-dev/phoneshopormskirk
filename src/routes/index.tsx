@@ -23,22 +23,22 @@ import { WhyChooseUs } from "@/components/site/WhyChooseUs";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Phone Shop Ormskirk — Repairs, Buy & Sell | 4 Aughton St" },
+      { title: "Phone Repairs Ormskirk | Phone Shop Ormskirk" },
       {
         name: "description",
         content:
-          "Phone repairs, pre-owned handsets, accessories and unlocking at 4 Aughton St, Ormskirk town centre. WhatsApp +44 7496 499992 for a quote.",
+          "Phone repairs in Ormskirk town centre. iPhone and Samsung screen repairs, battery replacement, phone unlocking, mobile phones and accessories at 4 Aughton St. Call or WhatsApp 07496 499992.",
       },
-      { property: "og:title", content: "Phone Shop Ormskirk — Repairs, Buy & Sell | 4 Aughton St" },
+      { property: "og:title", content: "Phone Repairs Ormskirk | Phone Shop Ormskirk" },
       {
         property: "og:description",
         content:
-          "Screen repairs, battery replacements, unlocking, used phones and accessories in Ormskirk.",
+          "Phone repairs in Ormskirk town centre. iPhone and Samsung screen repairs, battery replacement, phone unlocking, mobile phones and accessories at 4 Aughton St. Call or WhatsApp 07496 499992.",
       },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/" }],
   }),
   component: Index,
 });

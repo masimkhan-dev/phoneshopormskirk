@@ -14,10 +14,10 @@ export const Route = createFileRoute("/cookies")({
         property: "og:description",
         content: "Essential cookies explained for Phone Shop Ormskirk.",
       },
-      { property: "og:url", content: "/cookies" },
+      { property: "og:url", content: "https://www.phonestoreormskirk.co.uk/cookies" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/cookies" }],
+    links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/cookies" }],
   }),
   component: CookiePage,
 });
