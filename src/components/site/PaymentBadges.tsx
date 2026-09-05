@@ -137,9 +137,9 @@ export function PaymentBadges({ className, variant = "dark" }: PaymentBadgesProp
   const isDark = variant === "dark";
 
   const badgeBase = cn(
-    "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[0.72rem] font-medium leading-none transition-colors select-none",
+    "inline-flex h-7 items-center justify-center gap-1.5 rounded-lg px-2.5 text-[0.72rem] font-semibold tracking-tight leading-none transition-all select-none",
     isDark
-      ? "border border-white/12 bg-white/[0.06] text-white/90 hover:bg-white/[0.12] hover:border-white/20 hover:text-white shadow-2xs"
+      ? "border border-white/14 bg-white/[0.07] text-white/90 hover:bg-white/[0.12] hover:border-white/25 hover:text-white shadow-2xs"
       : "border border-border/80 bg-surface text-foreground hover:bg-muted/70 shadow-2xs",
   );
 

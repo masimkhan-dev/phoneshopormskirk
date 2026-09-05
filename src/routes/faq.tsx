@@ -38,29 +38,40 @@ function FaqPage() {
   return (
     <>
       <section className="brand-panel">
-        <div className="container-page py-16 md:py-20">
-          <span className="eyebrow-on-brand">Help & answers</span>
-          <h1 className="display-1 mt-4 max-w-3xl">Questions Customers Ask Us Most</h1>
-          <p className="mt-5 max-w-2xl text-lg text-on-brand/85">
-            Everything customers usually ask us before bringing a phone in. If your question isn't
-            here, message us — we'd rather answer properly than guess.
+        <div className="container-page py-14 md:py-18">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="eyebrow-on-brand">Help &amp; Answers</span>
+            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-on-brand backdrop-blur-sm">
+              Ormskirk Customer Guide
+            </span>
+          </div>
+
+          <h1 className="display-1 mt-4 max-w-3xl text-balance">Questions Customers Ask Us Most</h1>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-on-brand/90 sm:text-lg">
+            Straight answers to common questions about repair turnaround times, screen and battery
+            warranties, payment methods and phone valuations.
           </p>
         </div>
       </section>
 
-      <section className="section-y bg-surface">
+      <section className="section-y bg-background">
         <div className="container-page max-w-3xl">
-          <FaqList />
+          <div className="rounded-2xl border border-border/80 bg-surface p-6 sm:p-8 shadow-soft">
+            <FaqList />
+          </div>
           <FaqSchema />
         </div>
       </section>
 
       <section className="brand-panel-deep">
-        <div className="container-page flex flex-wrap items-center justify-between gap-6 py-14">
+        <div className="container-page flex flex-wrap items-center justify-between gap-6 py-12 md:py-14">
           <div>
-            <h2 className="display-3 font-extrabold">Still got a question?</h2>
-            <p className="mt-2 text-on-brand/85">
-              Send us a message with your device and what's wrong and we'll get straight back to you.
+            <span className="text-xs font-bold uppercase tracking-wider text-on-brand/70">
+              Need Clarification?
+            </span>
+            <h2 className="display-3 mt-1 font-extrabold">Still got a question?</h2>
+            <p className="mt-2 text-sm text-on-brand/85 sm:text-base">
+              Message us on WhatsApp with your handset make and model for straight, honest advice.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -68,13 +79,13 @@ function FaqPage() {
               href={whatsappUrl(business)}
               target="_blank"
               rel="noopener noreferrer"
-              className="press inline-flex rounded-md bg-whatsapp px-6 py-3.5 text-sm font-bold text-whatsapp-foreground shadow-lift"
+              className="press inline-flex items-center gap-2 rounded-lg bg-whatsapp px-5 py-3 text-sm font-bold text-whatsapp-foreground shadow-lift hover:brightness-105"
             >
               WhatsApp us
             </a>
             <a
               href={telUrl(business)}
-              className="press inline-flex rounded-md bg-background px-6 py-3.5 text-sm font-bold text-primary shadow-lift"
+              className="press inline-flex items-center gap-2 rounded-lg bg-background px-5 py-3 text-sm font-bold text-primary shadow-lift hover:bg-tint"
             >
               Call the shop
             </a>

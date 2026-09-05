@@ -37,25 +37,35 @@ function ReviewsPage() {
   return (
     <>
       <section className="brand-panel">
-        <div className="container-page py-16 md:py-20">
-          <span className="eyebrow-on-brand">Reviews</span>
-          <h1 className="display-1 mt-4 max-w-3xl">What our customers say</h1>
-          <p className="mt-5 max-w-2xl text-lg text-on-brand/85">
-            Read the latest feedback directly on our Google profile, along with a few reviews we've
-            been given permission to share here.
+        <div className="container-page py-14 md:py-18">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="eyebrow-on-brand">
+              <Star className="size-3.5 fill-current" aria-hidden />
+              Customer Reviews
+            </span>
+            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-on-brand backdrop-blur-sm">
+              Verified Google Feedback
+            </span>
+          </div>
+
+          <h1 className="display-1 mt-4 max-w-3xl text-balance">What our customers say</h1>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-on-brand/90 sm:text-lg">
+            Read independent reviews directly from our Google profile, together with verified
+            feedback from local customers across Ormskirk and West Lancashire.
           </p>
 
           <div className="mt-6">
             <GoogleRating tone="brand" />
           </div>
+
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
               href={reviewsUrl(business)}
               target="_blank"
               rel="noopener noreferrer"
-              className="press inline-flex items-center gap-2 rounded-md bg-background px-6 py-3.5 text-sm font-bold text-primary shadow-lift"
+              className="press inline-flex items-center gap-2 rounded-lg bg-background px-5 py-3 text-sm font-bold text-primary shadow-lift hover:bg-tint"
             >
-              <Star className="size-4" aria-hidden />
+              <Star className="size-4 text-primary fill-primary" aria-hidden />
               See our Google reviews
             </a>
             {business?.google_review_write_url ? (
@@ -63,7 +73,7 @@ function ReviewsPage() {
                 href={business.google_review_write_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="press inline-flex rounded-md border border-on-brand/35 px-6 py-3.5 text-sm font-bold text-on-brand hover:bg-on-brand/10"
+                className="press inline-flex items-center gap-2 rounded-lg border border-on-brand/35 px-5 py-3 text-sm font-bold text-on-brand hover:bg-on-brand/10 transition-colors"
               >
                 Leave us a review
               </a>
@@ -73,16 +83,20 @@ function ReviewsPage() {
         </div>
       </section>
 
-      <section className="section-y">
+      <section className="section-y bg-background">
         <ReviewsSection variant="full" />
       </section>
 
       <section className="ink-panel">
-        <div className="container-page flex flex-wrap items-center justify-between gap-6 py-14">
+        <div className="container-page flex flex-wrap items-center justify-between gap-6 py-12 md:py-14">
           <div>
-            <h2 className="display-3 font-extrabold">Come and see us in Ormskirk</h2>
-            <p className="mt-2 text-on-brand/80">
-              Pop in with your device and we'll take a look while you wait where we can.
+            <span className="text-xs font-bold uppercase tracking-wider text-on-brand/70">
+              Visit The Shop
+            </span>
+            <h2 className="display-3 mt-1 font-extrabold">Come and see us in Ormskirk</h2>
+            <p className="mt-2 text-sm text-on-brand/85 sm:text-base">
+              Pop into 4 Aughton Street with your device — we'll test it honestly while you wait
+              where possible.
             </p>
           </div>
           <DirectionsButton tone="onBrand" />

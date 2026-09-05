@@ -49,15 +49,15 @@ export function EnquiryForm({
   });
 
   const field =
-    "w-full rounded-md border border-input bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary";
+    "w-full rounded-xl border border-input bg-surface/50 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/15";
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-soft md:p-8">
+    <div className="rounded-2xl border border-border/85 bg-card p-6 sm:p-8 shadow-soft">
       <h2 className="display-3 font-extrabold">{title}</h2>
       {description ? <p className="mt-2 text-sm text-muted-foreground">{description}</p> : null}
 
       {done ? (
-        <div className="mt-6 rounded-md bg-tint p-5 text-sm">
+        <div className="mt-6 rounded-xl border border-primary/20 bg-tint p-5 text-sm">
           <p className="font-bold text-foreground">Enquiry received.</p>
           <p className="mt-1 text-muted-foreground">
             We'll be in touch soon. For a faster reply, message us on WhatsApp.
@@ -66,7 +66,7 @@ export function EnquiryForm({
             href={whatsappUrl(business, whatsappContext)}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex rounded-md bg-whatsapp px-4 py-2.5 text-sm font-bold text-whatsapp-foreground"
+            className="press mt-4 inline-flex items-center gap-2 rounded-full bg-whatsapp px-5 py-2.5 text-sm font-bold text-whatsapp-foreground shadow-soft"
           >
             Open WhatsApp
           </a>
@@ -80,17 +80,18 @@ export function EnquiryForm({
           }}
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-semibold">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Your name
               <input
                 required
                 maxLength={100}
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className={`mt-1.5 font-normal ${field}`}
+                className={`mt-1.5 font-normal text-foreground ${field}`}
+                placeholder="Full name"
               />
             </label>
-            <label className="block text-sm font-semibold">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Phone number
               <input
                 required
@@ -98,21 +99,23 @@ export function EnquiryForm({
                 maxLength={30}
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                className={`mt-1.5 font-normal ${field}`}
+                className={`mt-1.5 font-normal text-foreground ${field}`}
+                placeholder="07xxx xxxxxx"
               />
             </label>
           </div>
-          <label className="block text-sm font-semibold">
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Email (optional)
             <input
               type="email"
               maxLength={255}
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              className={`mt-1.5 font-normal ${field}`}
+              className={`mt-1.5 font-normal text-foreground ${field}`}
+              placeholder="you@example.co.uk"
             />
           </label>
-          <label className="block text-sm font-semibold">
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {messageLabel}
             <textarea
               rows={4}
@@ -120,7 +123,7 @@ export function EnquiryForm({
               placeholder={messagePlaceholder}
               value={form.message}
               onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-              className={`mt-1.5 font-normal ${field}`}
+              className={`mt-1.5 font-normal text-foreground ${field}`}
             />
           </label>
           <input
@@ -132,11 +135,11 @@ export function EnquiryForm({
             onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
             className="hidden"
           />
-          <div className="flex flex-wrap gap-3 pt-1">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="inline-flex rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-soft transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="press inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-extrabold text-primary-foreground shadow-lift transition-opacity hover:opacity-95 disabled:opacity-60"
             >
               {mutation.isPending ? "Sending…" : "Send enquiry"}
             </button>
@@ -144,9 +147,9 @@ export function EnquiryForm({
               href={whatsappUrl(business, whatsappContext)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex rounded-md bg-whatsapp px-5 py-3 text-sm font-bold text-whatsapp-foreground"
+              className="press inline-flex items-center justify-center rounded-full bg-whatsapp px-6 py-3 text-sm font-extrabold text-whatsapp-foreground shadow-soft hover:opacity-95"
             >
-              Or WhatsApp us
+              Message on WhatsApp instead
             </a>
           </div>
           <p className="text-xs text-muted-foreground">

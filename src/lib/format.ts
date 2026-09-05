@@ -16,15 +16,7 @@ export const AVAILABILITY_LABEL: Record<string, string> = {
   OUT_OF_STOCK: "Out of stock",
 };
 
-export const DAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+export const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 /** Monday-first list, used for hours tables. */
 export const WEEK_ORDER = [
@@ -39,9 +31,7 @@ export const WEEK_ORDER = [
 
 export function sortedHours(hours: OpeningHour[] | undefined | null): OpeningHour[] {
   if (!hours?.length) return [];
-  return [...hours].sort(
-    (a, b) => WEEK_ORDER.indexOf(a.day) - WEEK_ORDER.indexOf(b.day),
-  );
+  return [...hours].sort((a, b) => WEEK_ORDER.indexOf(a.day) - WEEK_ORDER.indexOf(b.day));
 }
 
 /** The shop's local timezone — all open/closed logic runs in UK time. */
@@ -117,7 +107,12 @@ export function openState(
       return { known: true, open: true, status: "Open now", detail: `Closes ${today.close}` };
     }
     if (minutesNow < from) {
-      return { known: true, open: false, status: "Closed now", detail: `Opens today ${today.open}` };
+      return {
+        known: true,
+        open: false,
+        status: "Closed now",
+        detail: `Opens today ${today.open}`,
+      };
     }
   }
 
@@ -150,11 +145,12 @@ export function fullAddress(b: BusinessSettings | null | undefined) {
   return [b.address_line1, b.address_line2, b.city, b.postcode].filter(Boolean).join(", ");
 }
 
+export const OFFICIAL_DIRECTIONS_URL =
+  "https://www.google.com/maps?vet=10CAAQoqAOahcKEwjwv82u0taWAxUAAAAAHQAAAAAQBQ..i&pvq=Cg0vZy8xMXdtamo5NmZ0IhAKClBob25lIHNob3AQAhgD&lqi=ChNQaG9uZSBzaG9wIE9ybXNraXJrSLmzkojOu4CACFofEAAQARgAGAEYAiITcGhvbmUgc2hvcCBvcm1za2lya5IBGG1vYmlsZV9waG9uZV9yZXBhaXJfc2hvcJoBRENpOURRVWxSUVVOdlpFTm9kSGxqUmpsdlQyNWFVR1JGVmxWTVYwMTRUVEZPUjFGck5VSmtXRkphWld0T2VtVlZSUkFC-gEECAAQNw&fvr=1&cs=1&um=1&ie=UTF-8&fb=1&gl=pk&sa=X&geocode=KZuFEppcF3tIMcVb3qAn-Gxz&daddr=4+Aughton+St,+Ormskirk+L39+3BW,+United+Kingdom";
+
 export function directionsUrl(b: BusinessSettings | null | undefined) {
   if (b?.google_directions_url) return b.google_directions_url;
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-    fullAddress(b) || "Ormskirk",
-  )}`;
+  return OFFICIAL_DIRECTIONS_URL;
 }
 
 export function reviewsUrl(b: BusinessSettings | null | undefined) {
@@ -183,8 +179,7 @@ export function localBusinessSchema(b: BusinessSettings | null | undefined) {
     priceRange: "£",
     name: b?.business_name ?? "Phone Shop Ormskirk",
     url: "https://www.phonestoreormskirk.co.uk/",
-    description:
-      b?.tagline ?? "Phone repairs, unlocking, used phones and accessories in Ormskirk.",
+    description: b?.tagline ?? "Phone repairs, unlocking, used phones and accessories in Ormskirk.",
     address: {
       "@type": "PostalAddress",
       streetAddress: [b?.address_line1, b?.address_line2].filter(Boolean).join(", ") || undefined,

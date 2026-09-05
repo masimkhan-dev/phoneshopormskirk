@@ -14,7 +14,7 @@ const DEFAULT_FAQS = [
     id: "f1",
     question: "How do I get a repair price?",
     answer:
-      "WhatsApp us your model and what's wrong. We'll give you a starting price — a realistic range based on what you describe. When you bring it in we look at it properly and confirm the final price before any work starts.",
+      "WhatsApp us your model and what's wrong. We will give you a realistic starting range based on your description. When you bring the device in, we examine it and confirm the final price before any work begins.",
     topic: "REPAIRS",
     sort_order: 10,
   },
@@ -38,7 +38,7 @@ const DEFAULT_FAQS = [
     id: "f4",
     question: "Do I need an appointment?",
     answer:
-      "No. Walk into 4 Aughton St anytime we're open. If you want to check we have a specific part in stock, WhatsApp or call ahead — it saves you a wasted trip.",
+      "No. Walk into 4 Aughton St anytime during opening hours. If you want to confirm stock for a specific part, WhatsApp or call ahead to save a wasted trip.",
     topic: "GENERAL",
     sort_order: 40,
   },
@@ -61,7 +61,7 @@ const DEFAULT_FAQS = [
     id: "f7",
     question: "What if my phone is too old to repair?",
     answer:
-      "We'll tell you honestly. If a repair costs more than the phone is worth, we'll say so — and suggest whether to sell it to us, trade it in, or recycle it responsibly.",
+      "We'll tell you honestly. If a repair costs more than the phone is worth, we will say so. We can then discuss selling it to us, trading it in or recycling it responsibly.",
     topic: "REPAIRS",
     sort_order: 70,
   },
@@ -69,15 +69,14 @@ const DEFAULT_FAQS = [
     id: "f8",
     question: "Do you guarantee your repairs?",
     answer:
-      "Yes — in writing on your receipt. The length depends on the repair, but it's there in black and white.",
+      "Yes — in writing on your receipt. The warranty period depends on the specific repair, clearly stated in black and white.",
     topic: "REPAIRS",
     sort_order: 80,
   },
   {
     id: "f9",
     question: "Where is the shop?",
-    answer:
-      "Find us at 4 Aughton Street Ormskirk L39 3BW in Ormskirk town centre, exactly opposite Costa Coffee.",
+    answer: "Find us at 4 Aughton Street in Ormskirk L39 3BW, exactly opposite Costa Coffee.",
     topic: "GENERAL",
     sort_order: 90,
   },

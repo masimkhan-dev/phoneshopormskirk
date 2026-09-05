@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Wrench } from "lucide-react";
 
 import repairBench from "@/assets/repair-bench.jpg";
 import { businessQuery, repairServicesQuery } from "@/lib/queries";
@@ -25,7 +25,8 @@ export const Route = createFileRoute("/repairs")({
       { property: "og:type", content: "website" },
       {
         property: "og:description",
-        content: "Screens, batteries, charging ports, cameras and water damage — repaired locally in Ormskirk.",
+        content:
+          "Screens, batteries, charging ports, cameras and water damage — repaired locally in Ormskirk.",
       },
     ],
     links: [{ rel: "canonical", href: "https://www.phonestoreormskirk.co.uk/repairs" }],
@@ -44,7 +45,7 @@ const STEPS = [
   },
   {
     title: "We explain the options",
-    body: "In plain English — what's wrong, what it takes to fix, and what it will cost.",
+    body: "In plain English: what's wrong, what it takes to fix and what it will cost.",
   },
   {
     title: "You decide",
@@ -55,7 +56,6 @@ const STEPS = [
     body: "We check the repair together before you pay and leave the shop.",
   },
 ];
-
 
 function RepairsPage() {
   const { data: business } = useQuery(businessQuery());
@@ -77,36 +77,41 @@ function RepairsPage() {
   return (
     <>
       <section className="brand-panel">
-        <div className="container-page grid items-center gap-12 py-16 md:py-20 lg:grid-cols-2">
+        <div className="container-page relative grid items-center gap-10 py-12 md:py-16 lg:grid-cols-2 lg:gap-16">
           <div>
-            <span className="eyebrow-on-brand">Repair services</span>
-            <h1 className="display-1 mt-4">Phone Repairs in Ormskirk</h1>
-            <p className="mt-5 max-w-xl text-lg text-on-brand/85">
+            <span className="eyebrow-on-brand flex items-center gap-2">
+              <Wrench className="size-3.5 text-on-brand/90" aria-hidden />
+              Workshop Services · Ormskirk
+            </span>
+            <h1 className="mt-4 text-[clamp(2.25rem,5.5vw,4rem)] font-extrabold tracking-[-0.035em] leading-[0.98]">
+              Phone Repairs in Ormskirk
+            </h1>
+            <p className="lede mt-5 max-w-xl text-on-brand/85 leading-relaxed">
               From cracked screens to dead batteries and water damage, we diagnose the fault and
-              quote you before we start. Prices below are starting points — the exact cost depends on
-              your model.
+              quote you before we start. Prices below are starting points. The exact cost depends on
+              your specific model.
             </p>
             <div className="mt-6">
               <OpenStatus tone="brand" />
             </div>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <a
                 href={whatsappUrl(business, { kind: "repair" })}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-md bg-whatsapp px-6 py-3.5 text-sm font-bold text-whatsapp-foreground shadow-lift"
+                className="press inline-flex min-h-13 items-center justify-center rounded-full bg-whatsapp px-7 text-sm font-extrabold text-whatsapp-foreground shadow-lift"
               >
                 WhatsApp for a quote
               </a>
               <a
                 href={telUrl(business)}
-                className="inline-flex rounded-md bg-background px-6 py-3.5 text-sm font-bold text-primary shadow-lift"
+                className="press inline-flex min-h-13 items-center justify-center rounded-full bg-background px-7 text-sm font-extrabold text-primary shadow-lift"
               >
                 Call the shop
               </a>
             </div>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-on-brand/15 shadow-lift">
+          <div className="overflow-hidden rounded-3xl border border-white/20 shadow-lift ring-1 ring-black/20">
             <img
               src={repairBench}
               loading="lazy"
@@ -118,19 +123,23 @@ function RepairsPage() {
         </div>
       </section>
 
-
-      <section className="section-y">
+      <section className="section-home bg-background">
         <div className="container-page">
-          <h2 className="display-2">Repair price guide</h2>
-          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-            Every price here is a "from" price, not a fixed quote. Search for your device or fault,
-            or message us and we'll confirm the exact price.
-          </p>
-          <label className="mt-6 block max-w-md text-sm font-semibold">
+          <div className="max-w-2xl">
+            <span className="eyebrow">Price guide</span>
+            <h2 className="display-2 mt-2">Repair price guide</h2>
+            <span className="rule-accent mt-4" />
+            <p className="lede mt-4 text-muted-foreground">
+              Every price here is a starting guide rather than a fixed quote. Search for your device
+              or fault, or message us to confirm the exact price.
+            </p>
+          </div>
+
+          <label className="mt-7 block max-w-md text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Search repairs
             <span className="relative mt-1.5 block">
               <Search
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
               />
               <input
@@ -138,20 +147,21 @@ function RepairsPage() {
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
                 placeholder="e.g. iPhone screen, battery, charging port"
-                className="w-full rounded-md border border-input bg-background py-2.5 pl-9 pr-3.5 text-sm font-normal outline-none focus:border-primary"
+                className="w-full rounded-xl border border-input bg-surface/50 py-2.5 pl-10 pr-3.5 text-sm font-normal text-foreground outline-none transition-colors focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/15"
               />
             </span>
           </label>
-          <div className="mt-8 flex flex-wrap gap-2">
+
+          <div className="mt-6 flex flex-wrap gap-2">
             {categories.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setActive(c)}
-                className={`rounded-full border px-4 py-2 text-sm font-bold transition-colors ${
+                className={`press rounded-full border px-4 py-1.5 text-xs font-bold transition-colors ${
                   active === c
                     ? "border-primary bg-primary text-primary-foreground"
-                    : "border-input bg-background hover:bg-accent"
+                    : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-tint"
                 }`}
               >
                 {c}
@@ -159,58 +169,65 @@ function RepairsPage() {
             ))}
           </div>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 md:mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map((r) => {
               const highlight = Boolean(r.featured);
               return (
                 <div
                   key={r.id}
-                  className={`flex flex-col rounded-xl p-6 shadow-soft ${
-                    highlight ? "brand-panel" : "border border-border bg-card"
+                  className={`card-lift flex flex-col justify-between rounded-2xl p-6 sm:p-7 shadow-soft transition-all ${
+                    highlight
+                      ? "border border-primary/30 bg-primary/5 hover:border-primary/50"
+                      : "border border-border/80 bg-card hover:border-primary/30"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <RepairIcon
-                      name={r.icon}
-                      className={`size-7 ${highlight ? "text-on-brand" : "text-primary"}`}
-                    />
-                    {highlight ? (
-                      <span className="rounded-full bg-on-brand/15 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em]">
-                        Popular
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+                        <RepairIcon name={r.icon} className="size-5.5" />
                       </span>
-                    ) : null}
+                      {highlight ? (
+                        <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[0.68rem] font-bold uppercase tracking-wider text-primary">
+                          Popular
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-surface px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-muted-foreground">
+                          {r.category || "Repair"}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="mt-4 text-base font-extrabold tracking-tight leading-snug">
+                      {r.name}
+                    </h3>
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                      {r.description}
+                    </p>
                   </div>
-                  <h3 className="mt-4 text-base font-bold">{r.name}</h3>
-                  <p
-                    className={`mt-1.5 flex-1 text-sm ${
-                      highlight ? "text-on-brand/80" : "text-muted-foreground"
-                    }`}
-                  >
-                    {r.description}
-                  </p>
-                  <p
-                    className={`mt-4 text-lg font-extrabold ${
-                      highlight ? "text-on-brand" : "text-primary"
-                    }`}
-                  >
-                    {r.starting_price_pence
-                      ? `From ${formatPrice(r.starting_price_pence)}`
-                      : "Price on inspection"}
-                  </p>
-                  <a
-                    href={whatsappUrl(business, { kind: "repair", repair: r.name })}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex justify-center rounded-md bg-whatsapp px-4 py-2.5 text-sm font-bold text-whatsapp-foreground"
-                  >
-                    Ask about this repair
-                  </a>
+
+                  <div className="mt-6 border-t border-border/60 pt-4">
+                    <span className="block text-[0.65rem] font-extrabold uppercase tracking-wider text-muted-foreground">
+                      {r.starting_price_pence ? "Starting price" : "Pricing"}
+                    </span>
+                    <p className="stat-figure mt-0.5 text-2xl! font-black text-primary">
+                      {r.starting_price_pence
+                        ? `From ${formatPrice(r.starting_price_pence)}`
+                        : "Price on inspection"}
+                    </p>
+                    <a
+                      href={whatsappUrl(business, { kind: "repair", repair: r.name })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="press mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-whatsapp px-4 py-2.5 text-xs font-extrabold text-whatsapp-foreground shadow-2xs hover:opacity-95"
+                    >
+                      Ask about this repair
+                    </a>
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          <p className="mt-6 text-sm text-muted-foreground">
+          <p className="mt-6 text-xs text-muted-foreground">
             {visible.length === 0
               ? "Nothing matched that search — message us with your device and fault and we'll price it for you."
               : "Don't see your device or fault listed? Message us — we repair most makes and models."}
@@ -218,48 +235,61 @@ function RepairsPage() {
         </div>
       </section>
 
-      <section className="border-y border-border bg-surface section-y">
+      {/* APPROACH */}
+      <section className="border-y border-border/80 bg-surface section-home">
         <div className="container-page">
-          <span className="eyebrow">How it works</span>
-          <h2 className="display-2 mt-3">Our repair approach</h2>
-          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-
+          <div className="max-w-xl">
+            <span className="eyebrow">How it works</span>
+            <h2 className="display-2 mt-2">Our repair approach</h2>
+            <span className="rule-accent mt-4" />
+          </div>
+          <div className="mt-8 md:mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {STEPS.map((s, i) => (
-              <div key={s.title}>
-                <span className="inline-flex size-9 items-center justify-center rounded-md bg-primary text-sm font-extrabold text-primary-foreground">
+              <div
+                key={s.title}
+                className="card-lift flex h-full flex-col rounded-2xl border border-border/75 bg-card p-5 sm:p-6 shadow-2xs hover:border-primary/30 transition-all"
+              >
+                <span className="flex size-9 items-center justify-center rounded-full border-2 border-primary bg-background text-xs font-black text-primary shadow-2xs">
                   0{i + 1}
                 </span>
-                <h3 className="mt-3 text-base font-bold">{s.title}</h3>
-                <p className="mt-1.5 text-sm text-muted-foreground">{s.body}</p>
+                <h3 className="mt-4 text-sm font-extrabold tracking-tight leading-snug">
+                  {s.title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{s.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="brand-panel-deep section-y">
+      <section className="section-home bg-background">
         <div className="container-page max-w-3xl">
           <EnquiryForm
             type="REPAIR_QUOTE"
             title="Request a repair quote"
-            description="Send us your device and the fault, and we'll come back with a price."
+            description="Send us your device and fault details. We'll come back with a clear price."
             messageLabel="Device and fault"
             messagePlaceholder="e.g. iPhone 12 — cracked screen, touch still working"
             whatsappContext={{ kind: "repair" }}
           />
 
-          <p className="mt-8 text-center text-sm text-on-brand/85">
+          <p className="mt-6 text-center text-xs text-muted-foreground">
             Have questions?{" "}
-            <Link to="/faq" className="font-bold text-on-brand underline underline-offset-4">
+            <Link
+              to="/faq"
+              className="font-bold text-foreground hover:text-primary underline underline-offset-4"
+            >
               See our FAQ
             </Link>{" "}
             or{" "}
-            <Link to="/contact" className="font-bold text-on-brand underline underline-offset-4">
+            <Link
+              to="/contact"
+              className="font-bold text-foreground hover:text-primary underline underline-offset-4"
+            >
               contact the shop
             </Link>
             .
           </p>
-
         </div>
       </section>
     </>

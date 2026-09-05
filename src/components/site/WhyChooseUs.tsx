@@ -18,22 +18,22 @@ export function WhyChooseUs() {
     {
       icon: MessageCircle,
       title: "Straight answers on WhatsApp",
-      body: "Send the model and the fault and you'll get a starting price back — no forms, no waiting on hold.",
+      body: "Send the model and fault to get a starting price back — no forms and no waiting on hold.",
     },
     {
       icon: Store,
       title: "A real shop in Ormskirk town centre",
-      body: "Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee. You can hand your phone to the person looking at it, ask questions and pick it up in the same place.",
+      body: "Find us at 4 Aughton Street in Ormskirk L39 3BW directly opposite Costa Coffee. Speak face-to-face with the technician, ask questions and collect your handset from the same counter.",
     },
     {
       icon: Wrench,
       title: "Repairs and phones under one roof",
-      body: "Repair the one you've got, trade it in, or buy a checked used handset — all handled over the same counter.",
+      body: "Repair your current phone, trade it in or buy a checked handset — all handled over the same counter.",
     },
     {
       icon: MapPin,
       title: "Nothing starts without your say-so",
-      body: "We look at the device, explain what's wrong in plain English and confirm the price before any work begins.",
+      body: "We examine your device, explain what is wrong in plain English and confirm the price before any work begins.",
     },
     ...(rating
       ? [
@@ -79,18 +79,23 @@ export function WhyChooseUs() {
         </p>
       </Reveal>
 
-      <div className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 md:mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {points.map(({ icon: Icon, title, body }, i) => (
           <Reveal
             key={title}
-            delay={i * 60}
-            className="card-lift rounded-2xl border border-border bg-card p-8 shadow-soft"
+            delay={i * 50}
+            className="card-lift flex h-full flex-col rounded-2xl border border-border/80 bg-card p-6 sm:p-7 shadow-soft hover:border-primary/30 transition-all"
           >
-            <span className="icon-dot">
-              <Icon className="size-5.5" aria-hidden />
-            </span>
-            <h3 className="mt-6 text-lg font-extrabold tracking-[-0.02em]">{title}</h3>
-            <p className="body-copy mt-3 text-muted-foreground">{body}</p>
+            <div className="flex items-center justify-between">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+                <Icon className="size-5.5" aria-hidden />
+              </span>
+              <span className="text-xs font-extrabold tracking-widest text-muted-foreground/50">
+                0{i + 1}
+              </span>
+            </div>
+            <h3 className="mt-5 text-lg font-extrabold tracking-[-0.02em] leading-snug">{title}</h3>
+            <p className="body-copy mt-2.5 flex-1 text-muted-foreground">{body}</p>
           </Reveal>
         ))}
       </div>

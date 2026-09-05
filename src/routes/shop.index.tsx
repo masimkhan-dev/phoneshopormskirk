@@ -74,12 +74,15 @@ function ShopPage() {
         <div className="pointer-events-none absolute right-0 top-0 size-[28rem] rounded-full bg-white/5 -translate-y-1/3 translate-x-1/4" />
         <div className="pointer-events-none absolute bottom-0 left-0 size-[18rem] rounded-full bg-black/10 translate-y-1/2 -translate-x-1/4" />
 
-        <div className="container-page relative py-14 md:py-20">
+        <div className="container-page relative py-12 md:py-16">
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
             {/* LEFT: copy */}
             <div>
-              <span className="eyebrow-on-brand">The Shop</span>
-              <h1 className="display-2 mt-4 max-w-xl text-on-brand">
+              <span className="eyebrow-on-brand flex items-center gap-2">
+                <Tag className="size-3.5" aria-hidden />
+                The Shop · Ormskirk
+              </span>
+              <h1 className="mt-4 text-[clamp(2.25rem,5.5vw,4rem)] font-extrabold tracking-[-0.035em] leading-[0.98] text-on-brand">
                 Phones &amp; Accessories
                 <br className="hidden sm:block" /> in Ormskirk
               </h1>
@@ -88,10 +91,10 @@ function ShopPage() {
                 centre shop. Stock changes regularly — message us to confirm before visiting.
               </p>
 
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="mt-7 flex flex-wrap items-center gap-3">
                 <a
                   href="#shop-catalogue"
-                  className="press inline-flex items-center gap-2 rounded-full bg-on-brand px-5 py-2.5 text-sm font-extrabold text-primary shadow-soft"
+                  className="press inline-flex items-center gap-2 rounded-full bg-on-brand px-6 py-3 text-sm font-extrabold text-primary shadow-lift"
                 >
                   Browse products
                 </a>
@@ -99,14 +102,14 @@ function ShopPage() {
                   href={whatsappUrl(business)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="press inline-flex items-center gap-2 rounded-full border border-on-brand/30 bg-on-brand/10 px-5 py-2.5 text-sm font-bold text-on-brand backdrop-blur-sm"
+                  className="press inline-flex items-center gap-2 rounded-full bg-whatsapp px-6 py-3 text-sm font-extrabold text-whatsapp-foreground shadow-lift"
                 >
                   <MessageCircle className="size-4" aria-hidden />
                   WhatsApp us
                 </a>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-7">
                 <OpenStatus tone="brand" />
               </div>
             </div>
@@ -296,9 +299,19 @@ function ShopPage() {
 
           {/* Product grid */}
           {visible.length > 0 ? (
-            <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div
+              className={`mt-4 ${
+                visible.length === 1
+                  ? "mx-auto grid max-w-sm"
+                  : visible.length === 2
+                    ? "mx-auto grid max-w-2xl gap-5 sm:grid-cols-2"
+                    : visible.length === 3
+                      ? "mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                      : "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              }`}
+            >
               {visible.map((p, i) => (
-                <Reveal key={p.id} delay={i * 60} className="h-full">
+                <Reveal key={p.id} delay={i * 50} className="h-full">
                   <ProductCard product={p} />
                 </Reveal>
               ))}

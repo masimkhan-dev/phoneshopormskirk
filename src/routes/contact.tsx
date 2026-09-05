@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { ExternalLink, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { businessQuery } from "@/lib/queries";
-import { fullAddress } from "@/lib/format";
+import { directionsUrl, fullAddress } from "@/lib/format";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
 import { EnquiryForm } from "@/components/site/EnquiryForm";
 import { OpenStatus } from "@/components/site/OpenStatus";
@@ -41,13 +41,22 @@ function ContactPage() {
   return (
     <>
       <section className="brand-panel">
-        <div className="container-page py-16 md:py-20">
-          <span className="eyebrow-on-brand">Contact</span>
-          <h1 className="display-1 mt-4 max-w-3xl">Find Phone Shop Ormskirk</h1>
-          <p className="mt-5 max-w-2xl text-lg text-on-brand/85">
-            Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in Ormskirk
-            town centre, with parking nearby. WhatsApp is the quickest way to reach us — we're
-            usually mid-repair, but we'll always get back to you.
+        <div className="container-page py-14 md:py-18">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="eyebrow-on-brand">
+              <MapPin className="size-3.5" aria-hidden />
+              Town Centre Location
+            </span>
+            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-on-brand backdrop-blur-sm">
+              Directly Opposite Costa Coffee
+            </span>
+          </div>
+
+          <h1 className="display-1 mt-4 max-w-3xl text-balance">Find Phone Shop Ormskirk</h1>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-on-brand/90 sm:text-lg">
+            Find us at 4 Aughton Street in Ormskirk L39 3BW directly opposite Costa Coffee.
+            Short-stay parking is close by. WhatsApp is the quickest way to reach us while we work
+            at the bench, and we reply promptly.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -60,42 +69,61 @@ function ContactPage() {
         </div>
       </section>
 
-      <section className="section-y">
-        <div className="container-page grid gap-12 lg:grid-cols-2 lg:gap-16">
-          <div className="space-y-10">
-            <div className="space-y-4 text-sm">
-              <div className="flex gap-3">
-                <MapPin className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+      <section className="section-y bg-background">
+        <div className="container-page grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+          <div className="space-y-8">
+            {/* Direct Channels Grid */}
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              <div className="rounded-xl border border-border/80 bg-card p-4 shadow-soft">
+                <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-wider text-primary">
+                  <MapPin className="size-4" aria-hidden />
+                  Shop Address
+                </div>
+                <p className="mt-2 text-sm font-semibold text-foreground leading-snug">
+                  {address || "4 Aughton Street, Ormskirk L39 3BW"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Opposite Costa Coffee</p>
+                <div className="mt-3">
+                  <DirectionsButton className="!px-3.5 !py-2 !text-xs font-bold" />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border/80 bg-card p-4 shadow-soft flex flex-col justify-between">
                 <div>
-                  <p className="font-bold">{address || "Ormskirk, United Kingdom"}</p>
-                  <div className="mt-2">
-                    <DirectionsButton className="!px-4 !py-2.5" />
+                  <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-wider text-primary">
+                    <Phone className="size-4" aria-hidden />
+                    Direct Phone
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-foreground">
+                    <a href={telUrl(business)} className="hover:text-primary transition-colors">
+                      {business?.phone ?? "07496 499992"}
+                    </a>
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Call during shop opening hours
+                  </p>
+                </div>
+                <div className="mt-3 pt-3 border-t border-border/60">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Mail className="size-3.5 text-primary shrink-0" aria-hidden />
+                    <a
+                      href={`mailto:${business?.email || "tefflakki188@gmail.com"}`}
+                      className="truncate hover:text-primary transition-colors"
+                    >
+                      {business?.email || "tefflakki188@gmail.com"}
+                    </a>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3">
-                <Phone className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-                <a href={telUrl(business)} className="font-bold hover:text-primary">
-                  {business?.phone ?? "Phone number to be confirmed"}
-                </a>
-              </div>
-              <div className="flex gap-3">
-                <Mail className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-                <a
-                  href={`mailto:${business?.email || "tefflakki188@gmail.com"}`}
-                  className="font-bold hover:text-primary"
-                >
-                  {business?.email || "tefflakki188@gmail.com"}
-                </a>
-              </div>
             </div>
 
-            <div>
+            {/* Opening Hours Card */}
+            <div className="rounded-2xl border border-border/80 bg-surface p-6 shadow-soft">
               <h2 className="display-3 font-extrabold">Opening hours</h2>
               <OpeningHours className="mt-4" />
-              <div className="mt-5">
+              <div className="mt-6 pt-5 border-t border-border/70">
                 <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground">
-                  Payments accepted
+                  Accepted In Store
                 </h3>
                 <div className="mt-2.5">
                   <PaymentBadges variant="light" />
@@ -103,51 +131,86 @@ function ContactPage() {
               </div>
             </div>
 
-            <div>
-              <h2 className="display-3 font-extrabold">Getting here</h2>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in
-                Ormskirk town centre, with town centre parking close by. We regularly help customers
-                from Ormskirk, Aughton, Burscough, Skelmersdale, Southport and the surrounding
-                villages.
+            {/* Getting Here Advice */}
+            <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-soft">
+              <h2 className="display-3 font-extrabold">Getting here &amp; parking</h2>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                Located on the Aughton Street pedestrian fringe in Ormskirk town centre, directly
+                opposite Costa Coffee. Town centre car parks (Park Road, Two Saints and Wheatsheaf
+                Walks) are just 2–3 minutes' walk away. We regularly welcome customers from across
+                Ormskirk, Aughton, Burscough, Skelmersdale and Southport.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <a
-                href={whatsappUrl(business)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex rounded-md bg-whatsapp px-6 py-3.5 text-sm font-bold text-whatsapp-foreground shadow-soft"
-              >
-                Message on WhatsApp
-              </a>
-              <a
-                href={telUrl(business)}
-                className="inline-flex rounded-md bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-soft"
-              >
-                Call the shop
-              </a>
-            </div>
-
-            {business?.google_maps_embed_url ? (
-              <div className="overflow-hidden rounded-xl border border-border">
+            {/* Responsive Google Maps Embed for Shop Location */}
+            <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
+              <div className="relative w-full overflow-hidden">
                 <iframe
-                  title="Map showing Phone Shop Ormskirk"
-                  src={business.google_maps_embed_url}
+                  title="Phone Store Ormskirk location on Google Maps"
+                  src={
+                    business?.google_maps_embed_url ||
+                    "https://maps.google.com/maps?q=Phone%20Shop%20Ormskirk%2C%204%20Aughton%20St%2C%20Ormskirk%20L39%203BW%2C%20United%20Kingdom&t=m&z=17&output=embed&iwloc=near"
+                  }
                   loading="lazy"
-                  className="h-72 w-full border-0"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="h-[300px] w-full border-0 sm:h-[360px] lg:h-[420px]"
                 />
               </div>
-            ) : null}
+
+              {/* Action row below map */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-surface px-4 py-3 sm:px-5">
+                <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                  <MapPin className="size-4 text-primary shrink-0" aria-hidden />
+                  <span>4 Aughton St, Ormskirk L39 3BW</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href={directionsUrl(business)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="press inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+                  >
+                    <MapPin className="size-3.5" aria-hidden />
+                    Get Directions
+                  </a>
+                  <a
+                    href={directionsUrl(business)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="press inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground hover:bg-tint hover:text-primary transition-colors"
+                  >
+                    <ExternalLink className="size-3.5" aria-hidden />
+                    Open in Google Maps
+                  </a>
+                  <a
+                    href={telUrl(business)}
+                    className="press inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground hover:bg-tint hover:text-primary transition-colors"
+                  >
+                    <Phone className="size-3.5" aria-hidden />
+                    Call
+                  </a>
+                  <a
+                    href={whatsappUrl(business)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="press inline-flex items-center gap-1.5 rounded-lg bg-whatsapp px-3.5 py-2 text-xs font-bold text-whatsapp-foreground shadow-xs hover:brightness-105 transition-all"
+                  >
+                    <MessageCircle className="size-3.5" aria-hidden />
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <EnquiryForm
-            type="GENERAL"
-            title="Send us a message"
-            description="Prefer to write? Leave your details and we'll reply as soon as we can."
-            messageLabel="How can we help?"
-          />
+          <div>
+            <EnquiryForm
+              type="GENERAL"
+              title="Send us a message"
+              description="Prefer to write? Leave your details and we'll reply as soon as we can."
+              messageLabel="How can we help?"
+            />
+          </div>
         </div>
       </section>
     </>

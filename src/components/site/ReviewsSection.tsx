@@ -63,7 +63,6 @@ export function ReviewsSection({ variant = "strip", limit }: Props) {
             Read the latest feedback directly on our Google profile and judge for yourself.
           </p>
 
-
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <a
               href={href}
@@ -85,7 +84,6 @@ export function ReviewsSection({ variant = "strip", limit }: Props) {
               </a>
             ) : null}
           </div>
-
         </Reveal>
 
         {shown.length > 0 ? (
@@ -94,26 +92,39 @@ export function ReviewsSection({ variant = "strip", limit }: Props) {
               <Reveal
                 key={r.id}
                 delay={i * 80}
-                className={`card-lift flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-soft ${
+                className={`card-lift flex h-full flex-col rounded-2xl border border-border/80 bg-card p-6 sm:p-7 shadow-soft hover:border-primary/30 transition-all ${
                   i === 0 ? "sm:col-span-2" : ""
                 }`}
               >
-                <Quote className="size-6 text-primary/35" aria-hidden />
-                {r.rating ? (
-                  <span className="mt-4 flex gap-0.5" aria-label={`${r.rating} out of 5`}>
-                    {Array.from({ length: r.rating }).map((_, idx) => (
-                      <Star key={idx} className="size-4 fill-primary text-primary" aria-hidden />
-                    ))}
-                  </span>
-                ) : null}
-                <blockquote className="mt-3 flex-1 text-[0.975rem] font-medium leading-relaxed text-foreground">
+                <div className="flex items-center justify-between">
+                  {r.rating ? (
+                    <div className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
+                      <Star className="size-3.5 fill-amber-500 text-amber-500" aria-hidden />
+                      <span>{r.rating}.0</span>
+                    </div>
+                  ) : (
+                    <span />
+                  )}
+                  <Quote className="size-5 text-primary/30" aria-hidden />
+                </div>
+                <blockquote className="mt-4 flex-1 text-[0.95rem] font-medium leading-relaxed text-foreground">
                   “{r.quote}”
                 </blockquote>
-                <footer className="mt-5 text-xs font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
-                  {r.author_name}
-                  {r.reviewed_on
-                    ? ` · ${new Date(r.reviewed_on).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}`
-                    : ""}
+                <footer className="mt-5 flex items-center justify-between border-t border-border/60 pt-4 text-xs">
+                  <span className="flex items-center gap-2 font-extrabold text-foreground">
+                    <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-[0.65rem] font-black uppercase text-primary">
+                      {r.author_name ? r.author_name.charAt(0) : "C"}
+                    </span>
+                    <span>{r.author_name}</span>
+                  </span>
+                  {r.reviewed_on ? (
+                    <span className="text-[0.7rem] font-bold uppercase tracking-wider text-muted-foreground/80">
+                      {new Date(r.reviewed_on).toLocaleDateString("en-GB", {
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  ) : null}
                 </footer>
               </Reveal>
             ))}
