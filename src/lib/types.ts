@@ -48,6 +48,7 @@ export type ProductCategory = {
 export type ProductImage = {
   id: string;
   url: string;
+  public_id?: string | null;
   alt_text: string | null;
   sort_order: number;
 };

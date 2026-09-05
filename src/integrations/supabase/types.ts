@@ -994,6 +994,7 @@ export type Database = {
           created_at: string
           id: string
           product_id: string
+          public_id: string | null
           sort_order: number
           url: string
         }
@@ -1002,6 +1003,7 @@ export type Database = {
           created_at?: string
           id?: string
           product_id: string
+          public_id?: string | null
           sort_order?: number
           url: string
         }
@@ -1010,6 +1012,7 @@ export type Database = {
           created_at?: string
           id?: string
           product_id?: string
+          public_id?: string | null
           sort_order?: number
           url?: string
         }

@@ -10,6 +10,7 @@ import { OpenStatus } from "@/components/site/OpenStatus";
 import { DirectionsButton } from "@/components/site/DirectionsButton";
 import { OpeningHours } from "@/components/site/OpeningHours";
 import { GoogleRating } from "@/components/site/GoogleRating";
+import { PaymentBadges } from "@/components/site/PaymentBadges";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -45,8 +46,8 @@ function ContactPage() {
           <h1 className="display-1 mt-4 max-w-3xl">Find Phone Shop Ormskirk</h1>
           <p className="mt-5 max-w-2xl text-lg text-on-brand/85">
             Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in Ormskirk
-            town centre, with parking nearby. WhatsApp is the quickest way to reach us — we're usually
-            mid-repair, but we'll always get back to you.
+            town centre, with parking nearby. WhatsApp is the quickest way to reach us — we're
+            usually mid-repair, but we'll always get back to you.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -58,7 +59,6 @@ function ContactPage() {
           </div>
         </div>
       </section>
-
 
       <section className="section-y">
         <div className="container-page grid gap-12 lg:grid-cols-2 lg:gap-16">
@@ -93,24 +93,25 @@ function ContactPage() {
             <div>
               <h2 className="display-3 font-extrabold">Opening hours</h2>
               <OpeningHours className="mt-4" />
-              {business?.payment_methods?.length ? (
-                <p className="mt-5 text-sm text-muted-foreground">
-                  <span className="font-bold text-foreground">Payments accepted:</span>{" "}
-                  {business.payment_methods.join(" · ")}
-                </p>
-              ) : null}
+              <div className="mt-5">
+                <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground">
+                  Payments accepted
+                </h3>
+                <div className="mt-2.5">
+                  <PaymentBadges variant="light" />
+                </div>
+              </div>
             </div>
 
             <div>
               <h2 className="display-3 font-extrabold">Getting here</h2>
               <p className="mt-3 text-sm text-muted-foreground">
-                Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in Ormskirk
-                town centre, with town centre parking close by. We regularly help customers from
-                Ormskirk, Aughton, Burscough, Skelmersdale, Southport and the surrounding villages.
+                Find us at 4 Aughton Street Ormskirk L39 3BW exactly opposite Costa Coffee in
+                Ormskirk town centre, with town centre parking close by. We regularly help customers
+                from Ormskirk, Aughton, Burscough, Skelmersdale, Southport and the surrounding
+                villages.
               </p>
             </div>
-
-
 
             <div className="flex flex-wrap gap-3">
               <a

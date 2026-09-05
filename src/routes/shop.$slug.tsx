@@ -1,12 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Package } from "lucide-react";
 
 import { businessQuery, productQuery } from "@/lib/queries";
 import { AVAILABILITY_LABEL, formatPrice } from "@/lib/format";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
 import { DirectionsButton } from "@/components/site/DirectionsButton";
+import { getCloudinaryImageUrl } from "@/lib/cloudinary";
 
 export const Route = createFileRoute("/shop/$slug")({
   head: ({ params }) => {
@@ -82,13 +83,17 @@ function ProductPage() {
             <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
               {active ? (
                 <img
-                  src={active.url}
+                  src={getCloudinaryImageUrl(active.url, "DETAIL")}
                   loading="lazy"
-              decoding="async"
-              alt={active.alt_text ?? `${product.name} available at Phone Shop Ormskirk`}
+                  decoding="async"
+                  alt={active.alt_text ?? `${product.name} - Phone Store Ormskirk`}
                   className="aspect-square size-full object-cover"
                 />
-              ) : null}
+              ) : (
+                <div className="flex aspect-square size-full items-center justify-center bg-muted/30 text-muted-foreground/40">
+                  <Package className="size-20 stroke-[1.2]" />
+                </div>
+              )}
             </div>
             {images.length > 1 ? (
               <div className="mt-4 flex gap-3">
@@ -97,15 +102,17 @@ function ProductPage() {
                     key={img.id}
                     type="button"
                     onClick={() => setIndex(i)}
-                    className={`size-20 overflow-hidden rounded-md border ${
-                      i === index ? "border-primary" : "border-border"
+                    className={`size-20 overflow-hidden rounded-md border transition-colors ${
+                      i === index
+                        ? "border-primary ring-2 ring-primary/20"
+                        : "border-border hover:border-border/80"
                     }`}
                   >
                     <img
-                      src={img.url}
+                      src={getCloudinaryImageUrl(img.url, "THUMBNAIL")}
                       loading="lazy"
-              decoding="async"
-              alt={img.alt_text ?? `${product.name} at Phone Shop Ormskirk, Aughton Street`}
+                      decoding="async"
+                      alt={img.alt_text ?? `${product.name} thumbnail ${i + 1}`}
                       className="size-full object-cover"
                     />
                   </button>
@@ -167,7 +174,6 @@ function ProductPage() {
               </a>
               <DirectionsButton tone="outline" label="Visit the store" />
             </div>
-
 
             {details.length > 0 || specs.length > 0 ? (
               <dl className="mt-10 divide-y divide-border border-y border-border text-sm">

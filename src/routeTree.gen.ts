@@ -41,7 +41,6 @@ import { Route as AuthenticatedAdminExpensesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminInvoiceTermsRouteImport } from './routes/_authenticated/admin.invoice-terms'
 import { Route as AuthenticatedAdminNewRepairRouteImport } from './routes/_authenticated/admin.new-repair'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
-import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as AuthenticatedAdminRepairServicesRouteImport } from './routes/_authenticated/admin.repair-services'
 import { Route as AuthenticatedAdminRepairsRouteImport } from './routes/_authenticated/admin.repairs'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
@@ -53,6 +52,10 @@ import { Route as AuthenticatedAdminSuppliersRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminWebsiteRouteImport } from './routes/_authenticated/admin.website'
 import { Route as AuthenticatedAdminInvoicesIndexRouteImport } from './routes/_authenticated/admin.invoices.index'
 import { Route as AuthenticatedAdminInvoicesInvoiceIdRouteImport } from './routes/_authenticated/admin.invoices.$invoiceId'
+import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin.products.index'
+import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin.products.new'
+import { Route as AuthenticatedAdminProductsQuickAddRouteImport } from './routes/_authenticated/admin.products.quick-add'
+import { Route as AuthenticatedAdminProductsIdEditRouteImport } from './routes/_authenticated/admin.products.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -223,12 +226,6 @@ const AuthenticatedAdminPaymentsRoute =
     path: '/payments',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminProductsRoute =
-  AuthenticatedAdminProductsRouteImport.update({
-    id: '/products',
-    path: '/products',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminRepairServicesRoute =
   AuthenticatedAdminRepairServicesRouteImport.update({
     id: '/repair-services',
@@ -293,6 +290,30 @@ const AuthenticatedAdminInvoicesInvoiceIdRoute =
     path: '/invoices/$invoiceId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminProductsIndexRoute =
+  AuthenticatedAdminProductsIndexRouteImport.update({
+    id: '/products/',
+    path: '/products/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminProductsNewRoute =
+  AuthenticatedAdminProductsNewRouteImport.update({
+    id: '/products/new',
+    path: '/products/new',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminProductsQuickAddRoute =
+  AuthenticatedAdminProductsQuickAddRouteImport.update({
+    id: '/products/quick-add',
+    path: '/products/quick-add',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminProductsIdEditRoute =
+  AuthenticatedAdminProductsIdEditRouteImport.update({
+    id: '/products/$id/edit',
+    path: '/products/$id/edit',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -325,7 +346,6 @@ export interface FileRoutesByFullPath {
   '/admin/invoice-terms': typeof AuthenticatedAdminInvoiceTermsRoute
   '/admin/new-repair': typeof AuthenticatedAdminNewRepairRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
-  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/repair-services': typeof AuthenticatedAdminRepairServicesRoute
   '/admin/repairs': typeof AuthenticatedAdminRepairsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
@@ -337,7 +357,11 @@ export interface FileRoutesByFullPath {
   '/admin/website': typeof AuthenticatedAdminWebsiteRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/invoices/$invoiceId': typeof AuthenticatedAdminInvoicesInvoiceIdRoute
+  '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/admin/products/quick-add': typeof AuthenticatedAdminProductsQuickAddRoute
   '/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
+  '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -369,7 +393,6 @@ export interface FileRoutesByTo {
   '/admin/invoice-terms': typeof AuthenticatedAdminInvoiceTermsRoute
   '/admin/new-repair': typeof AuthenticatedAdminNewRepairRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
-  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/admin/repair-services': typeof AuthenticatedAdminRepairServicesRoute
   '/admin/repairs': typeof AuthenticatedAdminRepairsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
@@ -381,7 +404,11 @@ export interface FileRoutesByTo {
   '/admin/website': typeof AuthenticatedAdminWebsiteRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/invoices/$invoiceId': typeof AuthenticatedAdminInvoicesInvoiceIdRoute
+  '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/admin/products/quick-add': typeof AuthenticatedAdminProductsQuickAddRoute
   '/admin/invoices': typeof AuthenticatedAdminInvoicesIndexRoute
+  '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
+  '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -416,7 +443,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/invoice-terms': typeof AuthenticatedAdminInvoiceTermsRoute
   '/_authenticated/admin/new-repair': typeof AuthenticatedAdminNewRepairRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
-  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
   '/_authenticated/admin/repair-services': typeof AuthenticatedAdminRepairServicesRoute
   '/_authenticated/admin/repairs': typeof AuthenticatedAdminRepairsRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
@@ -428,7 +454,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/website': typeof AuthenticatedAdminWebsiteRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/invoices/$invoiceId': typeof AuthenticatedAdminInvoicesInvoiceIdRoute
+  '/_authenticated/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/_authenticated/admin/products/quick-add': typeof AuthenticatedAdminProductsQuickAddRoute
   '/_authenticated/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
+  '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/_authenticated/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -463,7 +493,6 @@ export interface FileRouteTypes {
     | '/admin/invoice-terms'
     | '/admin/new-repair'
     | '/admin/payments'
-    | '/admin/products'
     | '/admin/repair-services'
     | '/admin/repairs'
     | '/admin/reports'
@@ -475,7 +504,11 @@ export interface FileRouteTypes {
     | '/admin/website'
     | '/admin/'
     | '/admin/invoices/$invoiceId'
+    | '/admin/products/new'
+    | '/admin/products/quick-add'
     | '/admin/invoices/'
+    | '/admin/products/'
+    | '/admin/products/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -507,7 +540,6 @@ export interface FileRouteTypes {
     | '/admin/invoice-terms'
     | '/admin/new-repair'
     | '/admin/payments'
-    | '/admin/products'
     | '/admin/repair-services'
     | '/admin/repairs'
     | '/admin/reports'
@@ -519,7 +551,11 @@ export interface FileRouteTypes {
     | '/admin/website'
     | '/admin'
     | '/admin/invoices/$invoiceId'
+    | '/admin/products/new'
+    | '/admin/products/quick-add'
     | '/admin/invoices'
+    | '/admin/products'
+    | '/admin/products/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -553,7 +589,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/invoice-terms'
     | '/_authenticated/admin/new-repair'
     | '/_authenticated/admin/payments'
-    | '/_authenticated/admin/products'
     | '/_authenticated/admin/repair-services'
     | '/_authenticated/admin/repairs'
     | '/_authenticated/admin/reports'
@@ -565,7 +600,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/website'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/invoices/$invoiceId'
+    | '/_authenticated/admin/products/new'
+    | '/_authenticated/admin/products/quick-add'
     | '/_authenticated/admin/invoices/'
+    | '/_authenticated/admin/products/'
+    | '/_authenticated/admin/products/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -817,13 +856,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPaymentsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/products': {
-      id: '/_authenticated/admin/products'
-      path: '/products'
-      fullPath: '/admin/products'
-      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/admin/repair-services': {
       id: '/_authenticated/admin/repair-services'
       path: '/repair-services'
@@ -901,6 +933,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminInvoicesInvoiceIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/products/': {
+      id: '/_authenticated/admin/products/'
+      path: '/products'
+      fullPath: '/admin/products/'
+      preLoaderRoute: typeof AuthenticatedAdminProductsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/products/new': {
+      id: '/_authenticated/admin/products/new'
+      path: '/products/new'
+      fullPath: '/admin/products/new'
+      preLoaderRoute: typeof AuthenticatedAdminProductsNewRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/products/quick-add': {
+      id: '/_authenticated/admin/products/quick-add'
+      path: '/products/quick-add'
+      fullPath: '/admin/products/quick-add'
+      preLoaderRoute: typeof AuthenticatedAdminProductsQuickAddRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/products/$id/edit': {
+      id: '/_authenticated/admin/products/$id/edit'
+      path: '/products/$id/edit'
+      fullPath: '/admin/products/$id/edit'
+      preLoaderRoute: typeof AuthenticatedAdminProductsIdEditRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
@@ -915,7 +975,6 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminInvoiceTermsRoute: typeof AuthenticatedAdminInvoiceTermsRoute
   AuthenticatedAdminNewRepairRoute: typeof AuthenticatedAdminNewRepairRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
-  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
   AuthenticatedAdminRepairServicesRoute: typeof AuthenticatedAdminRepairServicesRoute
   AuthenticatedAdminRepairsRoute: typeof AuthenticatedAdminRepairsRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
@@ -927,7 +986,11 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminWebsiteRoute: typeof AuthenticatedAdminWebsiteRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminInvoicesInvoiceIdRoute: typeof AuthenticatedAdminInvoicesInvoiceIdRoute
+  AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
+  AuthenticatedAdminProductsQuickAddRoute: typeof AuthenticatedAdminProductsQuickAddRoute
   AuthenticatedAdminInvoicesIndexRoute: typeof AuthenticatedAdminInvoicesIndexRoute
+  AuthenticatedAdminProductsIndexRoute: typeof AuthenticatedAdminProductsIndexRoute
+  AuthenticatedAdminProductsIdEditRoute: typeof AuthenticatedAdminProductsIdEditRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -941,7 +1004,6 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminInvoiceTermsRoute: AuthenticatedAdminInvoiceTermsRoute,
   AuthenticatedAdminNewRepairRoute: AuthenticatedAdminNewRepairRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
-  AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
   AuthenticatedAdminRepairServicesRoute: AuthenticatedAdminRepairServicesRoute,
   AuthenticatedAdminRepairsRoute: AuthenticatedAdminRepairsRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
@@ -954,7 +1016,12 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminInvoicesInvoiceIdRoute:
     AuthenticatedAdminInvoicesInvoiceIdRoute,
+  AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
+  AuthenticatedAdminProductsQuickAddRoute:
+    AuthenticatedAdminProductsQuickAddRoute,
   AuthenticatedAdminInvoicesIndexRoute: AuthenticatedAdminInvoicesIndexRoute,
+  AuthenticatedAdminProductsIndexRoute: AuthenticatedAdminProductsIndexRoute,
+  AuthenticatedAdminProductsIdEditRoute: AuthenticatedAdminProductsIdEditRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

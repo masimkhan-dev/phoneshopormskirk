@@ -61,7 +61,7 @@ export function WhyChooseUs() {
           {
             icon: CreditCard,
             title: "Payments accepted",
-            body: payments.join(" · "),
+            body: "Cash, cards, contactless, Apple Pay & Google Pay all accepted at our shop counter.",
           },
         ]
       : []),
@@ -74,8 +74,8 @@ export function WhyChooseUs() {
         <h2 className="display-2 mt-4">Why people come to us</h2>
         <span className="rule-accent mt-6" />
         <p className="lede mt-6 text-muted-foreground">
-          We'd rather under-promise and get it right. If a repair isn't worth the money, we'll say so
-          and tell you what we'd do instead.
+          We'd rather under-promise and get it right. If a repair isn't worth the money, we'll say
+          so and tell you what we'd do instead.
         </p>
       </Reveal>
 

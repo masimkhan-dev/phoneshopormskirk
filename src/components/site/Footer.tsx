@@ -7,12 +7,12 @@ import { businessQuery } from "@/lib/queries";
 import { directionsUrl, fullAddress, sortedHours, todayName } from "@/lib/format";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
 import { OpenStatus } from "./OpenStatus";
+import { PaymentBadges } from "./PaymentBadges";
 
 export function Footer() {
   const { data: business } = useQuery(businessQuery());
   const hours = sortedHours(business?.opening_hours);
   const socials = Object.entries(business?.social_links ?? {});
-  const payments = business?.payment_methods ?? [];
   const today = todayName();
   const pathname = useRouterState({ select: (st) => st.location.pathname });
   // The homepage closes with its own full-width conversion block, so skip this strip there.
@@ -21,41 +21,41 @@ export function Footer() {
   return (
     <footer className="bg-ink text-white/80">
       {showCtaStrip ? (
-      <div className="brand-panel">
-        <div className="container-page flex flex-wrap items-center justify-between gap-6 py-10">
-          <div>
-            <p className="display-3 font-extrabold">Need a repair?</p>
-            <p className="mt-2 text-sm text-on-brand/85">
-              Message us with your device and fault and we'll come straight back with a price.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href={whatsappUrl(business)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="press inline-flex rounded-full bg-whatsapp px-6 py-3.5 text-sm font-bold text-whatsapp-foreground shadow-lift"
-            >
-              WhatsApp us
-            </a>
-            <a
-              href={telUrl(business)}
-              className="press inline-flex rounded-full bg-background px-6 py-3.5 text-sm font-bold text-primary shadow-lift"
-            >
-              Call the shop
-            </a>
-            <a
-              href={directionsUrl(business)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="press inline-flex items-center gap-2 rounded-full border border-on-brand/35 px-6 py-3.5 text-sm font-bold text-on-brand hover:bg-on-brand/10"
-            >
-              <MapPin className="size-4" aria-hidden />
-              Get directions
-            </a>
+        <div className="brand-panel">
+          <div className="container-page flex flex-wrap items-center justify-between gap-6 py-10">
+            <div>
+              <p className="display-3 font-extrabold">Need a repair?</p>
+              <p className="mt-2 text-sm text-on-brand/85">
+                Message us with your device and fault and we'll come straight back with a price.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={whatsappUrl(business)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="press inline-flex rounded-full bg-whatsapp px-6 py-3.5 text-sm font-bold text-whatsapp-foreground shadow-lift"
+              >
+                WhatsApp us
+              </a>
+              <a
+                href={telUrl(business)}
+                className="press inline-flex rounded-full bg-background px-6 py-3.5 text-sm font-bold text-primary shadow-lift"
+              >
+                Call the shop
+              </a>
+              <a
+                href={directionsUrl(business)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="press inline-flex items-center gap-2 rounded-full border border-on-brand/35 px-6 py-3.5 text-sm font-bold text-on-brand hover:bg-on-brand/10"
+              >
+                <MapPin className="size-4" aria-hidden />
+                Get directions
+              </a>
+            </div>
           </div>
         </div>
-      </div>
       ) : null}
 
       <div className="container-page grid gap-12 py-14 md:grid-cols-2 lg:grid-cols-4">
@@ -136,15 +136,15 @@ export function Footer() {
             ))}
             {hours.length === 0 ? <li>Opening hours to be confirmed</li> : null}
           </ul>
-          {payments.length > 0 ? (
-            <div className="mt-6">
-              <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-white">
-                <CreditCard className="size-3.5 text-primary" aria-hidden />
-                Payments accepted
-              </h3>
-              <p className="mt-2 text-sm">{payments.join(" · ")}</p>
+          <div className="mt-6">
+            <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-white">
+              <CreditCard className="size-3.5 text-primary" aria-hidden />
+              Payments accepted
+            </h3>
+            <div className="mt-3">
+              <PaymentBadges variant="dark" />
             </div>
-          ) : null}
+          </div>
         </div>
 
         <div>

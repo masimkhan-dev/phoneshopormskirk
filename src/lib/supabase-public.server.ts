@@ -15,4 +15,4 @@ export function publicSupabase() {
 }
 
 export const PRODUCT_SELECT =
-  "id,name,slug,category_id,short_description,description,price_pence,brand,model,condition,storage,colour,availability,specs,featured,sort_order,product_images(id,url,alt_text,sort_order),product_categories(name,slug)";
+  "id,name,slug,category_id,short_description,description,price_pence,brand,model,condition,storage,colour,availability,specs,featured,sort_order,product_images(id,url,public_id,alt_text,sort_order),product_categories(name,slug)";

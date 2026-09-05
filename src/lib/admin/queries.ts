@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "./db";
 import { normalisePhone, periodStart } from "./money";
 import type { InvoiceTermsSnapshot, TermsSettings } from "@/lib/admin/terms";
+import type { ProductImage } from "@/lib/types";
 
 function unwrap<T>({ data, error }: { data: unknown; error: unknown }): T {
   if (error) throw new Error(friendlyError(error));
@@ -128,11 +129,20 @@ export type InvoiceDeviceSummary = {
 export function getInvoiceDeviceSummary(inv: {
   kind: string;
   snapshot?: Record<string, unknown> | null;
-  invoice_items?: Array<{ description: string; quantity: number; meta?: Record<string, unknown> | null }> | null;
+  invoice_items?: Array<{
+    description: string;
+    quantity: number;
+    meta?: Record<string, unknown> | null;
+  }> | null;
 }): InvoiceDeviceSummary {
   const snapshot = (inv.snapshot ?? {}) as {
     repair?: { device_brand?: string | null; device_model?: string | null; imei?: string | null };
-    stock?: { brand?: string | null; model?: string | null; storage?: string | null; imei?: string | null };
+    stock?: {
+      brand?: string | null;
+      model?: string | null;
+      storage?: string | null;
+      imei?: string | null;
+    };
   };
 
   const firstItem = inv.invoice_items?.[0];
@@ -142,7 +152,10 @@ export function getInvoiceDeviceSummary(inv: {
     const brand = r?.device_brand?.trim() || "";
     const model = r?.device_model?.trim() || "";
     const device = [brand, model].filter(Boolean).join(" ") || (firstItem?.description ?? "Repair");
-    const imei = r?.imei?.trim() || (firstItem?.meta ? String(firstItem.meta["imei"] ?? "").trim() : "") || null;
+    const imei =
+      r?.imei?.trim() ||
+      (firstItem?.meta ? String(firstItem.meta["imei"] ?? "").trim() : "") ||
+      null;
     return { device: device || "Repair", imei: imei || null };
   }
 
@@ -150,10 +163,18 @@ export function getInvoiceDeviceSummary(inv: {
     const s = snapshot.stock;
     const brand = s?.brand?.trim() || "";
     const model = s?.model?.trim() || "";
-    const storage = s?.storage?.trim() || (firstItem?.meta ? String(firstItem.meta["storage"] ?? "").trim() : "") || "";
+    const storage =
+      s?.storage?.trim() ||
+      (firstItem?.meta ? String(firstItem.meta["storage"] ?? "").trim() : "") ||
+      "";
     const name = [brand, model].filter(Boolean).join(" ");
-    const device = name ? [name, storage].filter(Boolean).join(" ") : (firstItem?.description ?? "Handset");
-    const imei = s?.imei?.trim() || (firstItem?.meta ? String(firstItem.meta["imei"] ?? "").trim() : "") || null;
+    const device = name
+      ? [name, storage].filter(Boolean).join(" ")
+      : (firstItem?.description ?? "Handset");
+    const imei =
+      s?.imei?.trim() ||
+      (firstItem?.meta ? String(firstItem.meta["imei"] ?? "").trim() : "") ||
+      null;
     return { device: device || "Handset", imei: imei || null };
   }
 
@@ -167,9 +188,10 @@ export function getInvoiceDeviceSummary(inv: {
       return { device: `${firstItem.description}${qtyStr}`, imei: null };
     }
     const rest = items.length - 1;
-    const summary = firstItem.quantity > 1
-      ? `${firstItem.description} ×${firstItem.quantity} + ${rest} more`
-      : `${firstItem.description} + ${rest} more`;
+    const summary =
+      firstItem.quantity > 1
+        ? `${firstItem.description} ×${firstItem.quantity} + ${rest} more`
+        : `${firstItem.description} + ${rest} more`;
     return { device: summary, imei: null };
   }
 
@@ -243,8 +265,10 @@ export type AdminProduct = {
   public_visible: boolean;
   featured: boolean;
   active: boolean;
+  specs?: Record<string, string> | null;
   created_at: string;
   product_categories?: { name: string } | null;
+  product_images?: ProductImage[];
 };
 
 export type Payment = {
@@ -429,11 +453,7 @@ export const repairQuery = (id: string) =>
     queryKey: ["admin", "repair", id],
     queryFn: async () =>
       unwrap<RepairInvoice & { customers: Customer | null }>(
-        await supabase
-          .from("repair_invoices")
-          .select("*, customers(*)")
-          .eq("id", id)
-          .single(),
+        await supabase.from("repair_invoices").select("*, customers(*)").eq("id", id).single(),
       ),
   });
 
@@ -509,7 +529,9 @@ export const adminProductsQuery = (search: string, includeArchived = false) =>
     queryFn: async () => {
       let q = supabase
         .from("products")
-        .select("*, product_categories(name)")
+        .select(
+          "*, product_categories(name), product_images(id, url, public_id, alt_text, sort_order)",
+        )
         .order("name")
         .limit(200);
       if (!includeArchived) q = q.eq("active", true);
@@ -519,6 +541,21 @@ export const adminProductsQuery = (search: string, includeArchived = false) =>
         );
       }
       return unwrap<AdminProduct[]>(await q);
+    },
+  });
+
+export const adminProductQuery = (id: string) =>
+  queryOptions({
+    queryKey: ["admin", "products", id],
+    queryFn: async () => {
+      const q = supabase
+        .from("products")
+        .select(
+          "*, product_categories(name), product_images(id, url, public_id, alt_text, sort_order)",
+        )
+        .eq("id", id)
+        .single();
+      return unwrap<AdminProduct>(await q);
     },
   });
 
@@ -568,21 +605,9 @@ export const invoiceQuery = (id: string) =>
         await supabase.from("invoices").select("*, customers(*)").eq("id", id).single(),
       );
       const [items, payments, terms] = await Promise.all([
-        supabase
-          .from("invoice_items")
-          .select("*")
-          .eq("invoice_id", id)
-          .order("created_at"),
-        supabase
-          .from("payments")
-          .select("*")
-          .eq("invoice_id", id)
-          .order("created_at"),
-        supabase
-          .from("invoice_terms")
-          .select("*")
-          .eq("invoice_id", id)
-          .maybeSingle(),
+        supabase.from("invoice_items").select("*").eq("invoice_id", id).order("created_at"),
+        supabase.from("payments").select("*").eq("invoice_id", id).order("created_at"),
+        supabase.from("invoice_terms").select("*").eq("invoice_id", id).maybeSingle(),
       ]);
       return {
         invoice,
@@ -700,14 +725,8 @@ export const dashboardQuery = queryOptions({
         .from("payments")
         .select("amount_pence,method,direction")
         .gte("created_at", todayStart),
-      supabase
-        .from("stock_items")
-        .select("id,purchase_cost_pence")
-        .eq("status", "IN_STOCK"),
-      supabase
-        .from("products")
-        .select("id,name,quantity,reorder_level")
-        .eq("active", true),
+      supabase.from("stock_items").select("id,purchase_cost_pence").eq("status", "IN_STOCK"),
+      supabase.from("products").select("id,name,quantity,reorder_level").eq("active", true),
       supabase
         .from("invoices")
         .select("balance_pence")
@@ -745,17 +764,13 @@ export const dashboardQuery = queryOptions({
         .gte("created_at", monthStart),
     ]);
 
-    const inv = unwrap<{ kind: string; total_pence: number; created_at: string }[]>(
-      invoicesToday,
-    );
+    const inv = unwrap<{ kind: string; total_pence: number; created_at: string }[]>(invoicesToday);
     const sales = unwrap<{ sale_kind: string; total_pence: number }[]>(salesToday);
-    const pays = unwrap<{ amount_pence: number; method: string; direction: string }[]>(
-      paymentsToday,
-    );
+    const pays =
+      unwrap<{ amount_pence: number; method: string; direction: string }[]>(paymentsToday);
     const stockRows = unwrap<{ purchase_cost_pence: number }[]>(stock);
-    const products = unwrap<
-      { id: string; name: string; quantity: number; reorder_level: number }[]
-    >(lowStock);
+    const products =
+      unwrap<{ id: string; name: string; quantity: number; reorder_level: number }[]>(lowStock);
     const repairsRows = unwrap<{ total_pence: number }[]>(repairsToday);
     const purchaseRows = unwrap<{ total_pence: number }[]>(purchasesToday);
 
@@ -786,9 +801,8 @@ export const dashboardQuery = queryOptions({
         acc[p.method] = (acc[p.method] ?? 0) + sign * p.amount_pence;
         return acc;
       }, {}),
-      monthTrend: unwrap<{ kind: string; total_pence: number; created_at: string }[]>(
-        monthInvoices,
-      ),
+      monthTrend:
+        unwrap<{ kind: string; total_pence: number; created_at: string }[]>(monthInvoices),
       recentRepairs: unwrap<RepairInvoice[]>(recentRepairs),
       recentSales: unwrap<
         {
@@ -824,62 +838,66 @@ export const globalSearchQuery = (term: string) =>
     queryFn: async () => {
       const t = term.trim();
       const digits = normalisePhone(t);
-      const [customers, repairs, stock, products, invoices, suppliers] =
-        await Promise.all([
-          supabase
-            .from("customers")
-            .select("id,name,phone")
-            .or(
-              [
-                `name.ilike.%${t}%`,
-                digits ? `phone_normalized.ilike.%${digits}%` : `email.ilike.%${t}%`,
-              ].join(","),
-            )
-            .limit(5),
-          supabase
-            .from("repair_invoices")
-            .select("id,repair_number,device_model,total_pence")
-            .or(
-              [
-                `repair_number.ilike.%${t}%`,
-                `imei.ilike.%${t}%`,
-                `serial.ilike.%${t}%`,
-                `device_model.ilike.%${t}%`,
-              ].join(","),
-            )
-            .limit(5),
-          supabase
-            .from("stock_items")
-            .select("id,sku,brand,model,imei,status")
-            .or(
-              [
-                `imei.ilike.%${t}%`,
-                `sku.ilike.%${t}%`,
-                `serial.ilike.%${t}%`,
-                `model.ilike.%${t}%`,
-              ].join(","),
-            )
-            .limit(5),
-          supabase
-            .from("products")
-            .select("id,name,sku,quantity")
-            .or(`name.ilike.%${t}%,sku.ilike.%${t}%`)
-            .limit(5),
-          supabase
-            .from("invoices")
-            .select("id,invoice_number,kind,total_pence")
-            .ilike("invoice_number", `%${t}%`)
-            .limit(5),
-          supabase
-            .from("suppliers")
-            .select("id,name,company")
-            .or(`name.ilike.%${t}%,company.ilike.%${t}%`)
-            .limit(5),
-        ]);
+      const [customers, repairs, stock, products, invoices, suppliers] = await Promise.all([
+        supabase
+          .from("customers")
+          .select("id,name,phone")
+          .or(
+            [
+              `name.ilike.%${t}%`,
+              digits ? `phone_normalized.ilike.%${digits}%` : `email.ilike.%${t}%`,
+            ].join(","),
+          )
+          .limit(5),
+        supabase
+          .from("repair_invoices")
+          .select("id,repair_number,device_model,total_pence")
+          .or(
+            [
+              `repair_number.ilike.%${t}%`,
+              `imei.ilike.%${t}%`,
+              `serial.ilike.%${t}%`,
+              `device_model.ilike.%${t}%`,
+            ].join(","),
+          )
+          .limit(5),
+        supabase
+          .from("stock_items")
+          .select("id,sku,brand,model,imei,status")
+          .or(
+            [
+              `imei.ilike.%${t}%`,
+              `sku.ilike.%${t}%`,
+              `serial.ilike.%${t}%`,
+              `model.ilike.%${t}%`,
+            ].join(","),
+          )
+          .limit(5),
+        supabase
+          .from("products")
+          .select("id,name,sku,quantity")
+          .or(`name.ilike.%${t}%,sku.ilike.%${t}%`)
+          .limit(5),
+        supabase
+          .from("invoices")
+          .select("id,invoice_number,kind,total_pence")
+          .ilike("invoice_number", `%${t}%`)
+          .limit(5),
+        supabase
+          .from("suppliers")
+          .select("id,name,company")
+          .or(`name.ilike.%${t}%,company.ilike.%${t}%`)
+          .limit(5),
+      ]);
       return {
         customers: unwrap<{ id: string; name: string; phone: string }[]>(customers),
         repairs: unwrap<
-          { id: string; repair_number: string; device_model: string | null; total_pence: number }[]
+          {
+            id: string;
+            repair_number: string;
+            device_model: string | null;
+            total_pence: number;
+          }[]
         >(repairs),
         stock: unwrap<
           {
@@ -891,15 +909,13 @@ export const globalSearchQuery = (term: string) =>
             status: string;
           }[]
         >(stock),
-        products: unwrap<{ id: string; name: string; sku: string | null; quantity: number }[]>(
-          products,
-        ),
-        invoices: unwrap<
-          { id: string; invoice_number: string; kind: string; total_pence: number }[]
-        >(invoices),
-        suppliers: unwrap<{ id: string; name: string; company: string | null }[]>(
-          suppliers,
-        ),
+        products:
+          unwrap<{ id: string; name: string; sku: string | null; quantity: number }[]>(products),
+        invoices:
+          unwrap<{ id: string; invoice_number: string; kind: string; total_pence: number }[]>(
+            invoices,
+          ),
+        suppliers: unwrap<{ id: string; name: string; company: string | null }[]>(suppliers),
       };
     },
   });
@@ -913,57 +929,65 @@ export const reportsQuery = (from: string, to: string) =>
       const fromDay = from.slice(0, 10);
       const toDay = to.slice(0, 10);
 
-      const [invoices, sales, saleItems, repairs, purchases, payments, stock, products, dailySales, expenses] =
-        await Promise.all([
-          supabase
-            .from("invoices")
-            .select("id,kind,status,total_pence,discount_pence,balance_pence,created_at")
-            .gte("created_at", from)
-            .lte("created_at", to),
-          supabase
-            .from("sales")
-            .select("id,sale_kind,total_pence,discount_pence,cost_pence,record_status,created_at")
-            .gte("created_at", from)
-            .lte("created_at", to),
-          supabase
-            .from("sale_items")
-            .select("quantity,line_total_pence,unit_cost_pence,created_at")
-            .gte("created_at", from)
-            .lte("created_at", to),
-          supabase
-            .from("repair_invoices")
-            .select(
-              "id,fault,total_pence,balance_pence,payment_status,record_status,created_at",
-            )
-            .gte("created_at", from)
-            .lte("created_at", to),
-          supabase
-            .from("phone_purchases")
-            .select("id,total_pence,record_status,created_at")
-            .gte("created_at", from)
-            .lte("created_at", to),
-          supabase
-            .from("payments")
-            .select("amount_pence,method,direction,created_at")
-            .gte("created_at", from)
-            .lte("created_at", to),
-          supabase
-            .from("stock_items")
-            .select("id,brand,condition,status,purchase_cost_pence,selling_price_pence,created_at"),
-          supabase
-            .from("products")
-            .select("id,name,quantity,reorder_level,cost_price_pence,price_pence,active"),
-          supabase
-            .from("daily_sales")
-            .select("*")
-            .gte("entry_date", fromDay)
-            .lte("entry_date", toDay),
-          supabase
-            .from("expenses")
-            .select("*")
-            .gte("expense_date", fromDay)
-            .lte("expense_date", toDay),
-        ]);
+      const [
+        invoices,
+        sales,
+        saleItems,
+        repairs,
+        purchases,
+        payments,
+        stock,
+        products,
+        dailySales,
+        expenses,
+      ] = await Promise.all([
+        supabase
+          .from("invoices")
+          .select("id,kind,status,total_pence,discount_pence,balance_pence,created_at")
+          .gte("created_at", from)
+          .lte("created_at", to),
+        supabase
+          .from("sales")
+          .select("id,sale_kind,total_pence,discount_pence,cost_pence,record_status,created_at")
+          .gte("created_at", from)
+          .lte("created_at", to),
+        supabase
+          .from("sale_items")
+          .select("quantity,line_total_pence,unit_cost_pence,created_at")
+          .gte("created_at", from)
+          .lte("created_at", to),
+        supabase
+          .from("repair_invoices")
+          .select("id,fault,total_pence,balance_pence,payment_status,record_status,created_at")
+          .gte("created_at", from)
+          .lte("created_at", to),
+        supabase
+          .from("phone_purchases")
+          .select("id,total_pence,record_status,created_at")
+          .gte("created_at", from)
+          .lte("created_at", to),
+        supabase
+          .from("payments")
+          .select("amount_pence,method,direction,created_at")
+          .gte("created_at", from)
+          .lte("created_at", to),
+        supabase
+          .from("stock_items")
+          .select("id,brand,condition,status,purchase_cost_pence,selling_price_pence,created_at"),
+        supabase
+          .from("products")
+          .select("id,name,quantity,reorder_level,cost_price_pence,price_pence,active"),
+        supabase
+          .from("daily_sales")
+          .select("*")
+          .gte("entry_date", fromDay)
+          .lte("entry_date", toDay),
+        supabase
+          .from("expenses")
+          .select("*")
+          .gte("expense_date", fromDay)
+          .lte("expense_date", toDay),
+      ]);
       return {
         invoices: unwrap<Invoice[]>(invoices),
         sales: unwrap<
@@ -976,9 +1000,10 @@ export const reportsQuery = (from: string, to: string) =>
             created_at: string;
           }[]
         >(sales),
-        saleItems: unwrap<
-          { quantity: number; line_total_pence: number; unit_cost_pence: number }[]
-        >(saleItems),
+        saleItems:
+          unwrap<{ quantity: number; line_total_pence: number; unit_cost_pence: number }[]>(
+            saleItems,
+          ),
         repairs: unwrap<
           {
             fault: string;
@@ -989,9 +1014,7 @@ export const reportsQuery = (from: string, to: string) =>
           }[]
         >(repairs),
         purchases: unwrap<{ total_pence: number; record_status: string }[]>(purchases),
-        payments: unwrap<
-          { amount_pence: number; method: string; direction: string }[]
-        >(payments),
+        payments: unwrap<{ amount_pence: number; method: string; direction: string }[]>(payments),
         stock: unwrap<StockItem[]>(stock),
         products: unwrap<AdminProduct[]>(products),
         dailySales: unwrap<DailySale[]>(dailySales),
@@ -1026,13 +1049,7 @@ export const repairServicesAdminQuery = queryOptions({
         featured: boolean;
         sort_order: number;
       }[]
-    >(
-      await supabase
-        .from("repair_services")
-        .select("*")
-        .order("sort_order")
-        .order("name"),
-    ),
+    >(await supabase.from("repair_services").select("*").order("sort_order").order("name")),
 });
 
 export const staffQuery = queryOptions({
@@ -1044,7 +1061,13 @@ export const staffQuery = queryOptions({
     ]);
     const roleRows = unwrap<{ user_id: string; role: string }[]>(roles);
     return unwrap<
-      { id: string; full_name: string | null; email: string | null; active: boolean; created_at: string }[]
+      {
+        id: string;
+        full_name: string | null;
+        email: string | null;
+        active: boolean;
+        created_at: string;
+      }[]
     >(profiles).map((p) => ({
       ...p,
       role: roleRows.find((r) => r.user_id === p.id)?.role ?? "STAFF",
@@ -1129,36 +1152,31 @@ export const dayEndQuery = (day: string) =>
           .order("created_at"),
         supabase
           .from("invoices")
-          .select("id,invoice_number,kind,status,payment_status,total_pence,refunded_pence,created_at")
+          .select(
+            "id,invoice_number,kind,status,payment_status,total_pence,refunded_pence,created_at",
+          )
           .gte("created_at", start)
           .lte("created_at", end)
           .order("created_at"),
-        supabase
-          .from("daily_sales")
-          .select("*")
-          .eq("entry_date", day)
-          .eq("status", "ACTIVE"),
-        supabase
-          .from("expenses")
-          .select("*")
-          .eq("expense_date", day)
-          .eq("status", "ACTIVE"),
+        supabase.from("daily_sales").select("*").eq("entry_date", day).eq("status", "ACTIVE"),
+        supabase.from("expenses").select("*").eq("expense_date", day).eq("status", "ACTIVE"),
       ]);
       return {
         payments: unwrap<Payment[]>(payments),
-        invoices: unwrap<
-          Pick<
-            Invoice,
-            | "id"
-            | "invoice_number"
-            | "kind"
-            | "status"
-            | "payment_status"
-            | "total_pence"
-            | "refunded_pence"
-            | "created_at"
-          >[]
-        >(invoices),
+        invoices:
+          unwrap<
+            Pick<
+              Invoice,
+              | "id"
+              | "invoice_number"
+              | "kind"
+              | "status"
+              | "payment_status"
+              | "total_pence"
+              | "refunded_pence"
+              | "created_at"
+            >[]
+          >(invoices),
         dailySales: unwrap<DailySale[]>(dailySales),
         expenses: unwrap<Expense[]>(expenses),
       };
