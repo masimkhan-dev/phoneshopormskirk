@@ -133,6 +133,15 @@ function RepairsPage() {
               Every price here is a starting guide rather than a fixed quote. Search for your device
               or fault, or message us to confirm the exact price.
             </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Looking for local repair info?{" "}
+              <Link
+                to="/phone-repair-ormskirk"
+                className="font-bold text-foreground hover:text-primary underline underline-offset-4"
+              >
+                View our Ormskirk phone repair service page →
+              </Link>
+            </p>
           </div>
 
           <label className="mt-7 block max-w-md text-xs font-bold uppercase tracking-wider text-muted-foreground">

@@ -189,7 +189,9 @@ export function localBusinessSchema(b: BusinessSettings | null | undefined) {
       addressCountry: "GB",
     },
     telephone: b?.phone ?? undefined,
-    email: b?.email || "tefflakki188@gmail.com",
+    // Only include email in structured data when a real business email is configured.
+    // A personal Gmail fallback is omitted to avoid E-E-A-T signal harm.
+    ...(b?.email ? { email: b.email } : {}),
     areaServed: "Ormskirk, Lancashire",
     ...(b?.latitude && b?.longitude
       ? { geo: { "@type": "GeoCoordinates", latitude: b.latitude, longitude: b.longitude } }

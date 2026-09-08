@@ -23,6 +23,8 @@ import { Toaster } from "@/components/ui/sonner";
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      {/* Tell crawlers not to index 404 pages */}
+      <meta name="robots" content="noindex" />
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
@@ -92,7 +94,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Phone repairs, unlocking, used phones and accessories in Ormskirk. Fast local service — call or WhatsApp us today.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Phone Store Ormskirk" },
+      { property: "og:image", content: "https://www.phonestoreormskirk.co.uk/og-image.jpg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://www.phonestoreormskirk.co.uk/og-image.jpg" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

@@ -31,6 +31,25 @@ export const Route = createFileRoute("/shop/")({
   component: ShopPage,
 });
 
+const SITE_ORIGIN = "https://www.phonestoreormskirk.co.uk";
+
+function ShopBreadcrumbSchema() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_ORIGIN}/` },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_ORIGIN}/shop` },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 const AVAILABILITY_FILTERS = [
   { value: "all", label: "All stock" },
   { value: "AVAILABLE", label: "Available" },
@@ -67,6 +86,7 @@ function ShopPage() {
 
   return (
     <>
+      <ShopBreadcrumbSchema />
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden brand-panel">
         {/* Depth layers */}

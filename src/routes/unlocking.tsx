@@ -15,8 +15,7 @@ export const Route = createFileRoute("/unlocking")({
         content:
           "Network unlocking for iPhone, Samsung and more in Ormskirk. Check eligibility free. WhatsApp for a quote.",
       },
-      { property: "og:title", content: "Phone Unlocking Ormskirk — All Networks" },
-      { property: "og:url", content: "/unlocking" },
+      { property: "og:title", content: "Phone Unlocking Ormskirk" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",
@@ -66,10 +65,11 @@ function UnlockingPage() {
             </span>
           </div>
 
-          <h1 className="display-1 mt-4 max-w-3xl text-balance">
+          <h1 className="display-1 mt-4 max-w-3xl text-balance">Phone Unlocking in Ormskirk</h1>
+          <p className="mt-2 max-w-2xl text-lg font-medium leading-snug text-on-brand/90">
             Locked to a network you've left?
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-on-brand/90 sm:text-lg">
+          </p>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-on-brand/85">
             We unlock most makes and models so your handset can be used with any compatible network
             — handy if you want a cheaper monthly SIM or a higher resale value when you sell.
           </p>

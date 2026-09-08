@@ -9,40 +9,182 @@ import { telUrl, whatsappUrl } from "@/lib/whatsapp";
 import { DirectionsButton } from "@/components/site/DirectionsButton";
 import { getCloudinaryImageUrl } from "@/lib/cloudinary";
 
+const SITE_ORIGIN = "https://www.phonestoreormskirk.co.uk";
+const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.jpg`;
+
 export const Route = createFileRoute("/shop/$slug")({
-  head: ({ params }) => {
-    const name = params.slug
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
+  loader: async ({ params, context }) => {
+    // Prime the product cache and return real data so head() can use it for SSR meta.
+    const product = await context.queryClient.ensureQueryData(productQuery(params.slug));
+    return { product: product ?? null };
+  },
+  head: ({ params, loaderData }) => {
+    const product = loaderData?.product as import("@/lib/types").Product | null | undefined;
+
+    const pageUrl = `${SITE_ORIGIN}/shop/${params.slug}`;
+
+    // ?????? Title ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+    const title = product
+      ? `${product.name} | Phone Store Ormskirk`
+      : params.slug
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ") + " | Phone Store Ormskirk";
+
+    // ?????? Meta description ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+    let description: string;
+    if (product) {
+      if (product.short_description) {
+        description = product.short_description;
+      } else {
+        const pricePart =
+          product.price_pence != null ? ` from £${(product.price_pence / 100).toFixed(0)}` : "";
+        description = `${product.name}${pricePart}. Available at Phone Store Ormskirk, 4 Aughton Street, Ormskirk town centre.`;
+      }
+    } else {
+      description = `Available at Phone Store Ormskirk, 4 Aughton Street, Ormskirk town centre.`;
+    }
+
+    // ── OG image — use first product image if available ───────────
+    const firstImage = product?.product_images?.length
+      ? [...product.product_images].sort((a, b) => a.sort_order - b.sort_order)[0]
+      : null;
+    const ogImage = firstImage?.url
+      ? getCloudinaryImageUrl(firstImage.url, "DETAIL")
+      : DEFAULT_OG_IMAGE;
+
+    // ── Price meta — only when real data present ─────────────────
+    const priceMeta =
+      product?.price_pence != null
+        ? [
+            {
+              property: "product:price:amount",
+              content: (product.price_pence / 100).toFixed(2),
+            },
+            { property: "product:price:currency", content: "GBP" },
+          ]
+        : [];
+
     return {
       meta: [
-        { title: `${name} | Phone Shop Ormskirk` },
-        {
-          name: "description",
-          content: `${name} available at Phone Shop Ormskirk. Reserve over WhatsApp and collect in store.`,
-        },
-        { property: "og:title", content: `${name} | Phone Shop Ormskirk` },
-        {
-          property: "og:description",
-          content: `${name} available in our Ormskirk store.`,
-        },
-        {
-          property: "og:url",
-          content: `https://www.phonestoreormskirk.co.uk/shop/${params.slug}`,
-        },
-        { property: "og:type", content: "website" },
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: pageUrl },
+        { property: "og:type", content: "product" },
+        { property: "og:image", content: ogImage },
+        { name: "twitter:image", content: ogImage },
+        ...priceMeta,
       ],
-      links: [
-        {
-          rel: "canonical",
-          href: `https://www.phonestoreormskirk.co.uk/shop/${params.slug}`,
-        },
-      ],
+      links: [{ rel: "canonical", href: pageUrl }],
     };
   },
   component: ProductPage,
 });
+
+// ── BreadcrumbList JSON-LD ──────────────────────────────────────────────────
+function BreadcrumbSchema({ name, slug }: { name: string; slug: string }) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${SITE_ORIGIN}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: `${SITE_ORIGIN}/shop`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name,
+        item: `${SITE_ORIGIN}/shop/${slug}`,
+      },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+function mapSchemaCondition(cond: string | null | undefined): string | null {
+  if (!cond) return null;
+  const lower = cond.toLowerCase().trim();
+  if (lower.includes("new")) return "https://schema.org/NewCondition";
+  if (lower.includes("refurb")) return "https://schema.org/RefurbishedCondition";
+  if (
+    lower.includes("used") ||
+    lower.includes("excellent") ||
+    lower.includes("good") ||
+    lower.includes("fair") ||
+    lower.includes("grade")
+  ) {
+    return "https://schema.org/UsedCondition";
+  }
+  return null;
+}
+
+// ── Product JSON-LD ─────────────────────────────────────────────────────────
+function ProductSchema({ product }: { product: import("@/lib/types").Product }) {
+  const firstImage = product.product_images?.length
+    ? [...product.product_images].sort((a, b) => a.sort_order - b.sort_order)[0]
+    : null;
+  const imageUrl = firstImage?.url ? getCloudinaryImageUrl(firstImage.url, "DETAIL") : null;
+
+  const availabilityMap: Record<string, string> = {
+    AVAILABLE: "https://schema.org/InStock",
+    LIMITED: "https://schema.org/LimitedAvailability",
+    OUT_OF_STOCK: "https://schema.org/OutOfStock",
+  };
+  const availabilityUrl = availabilityMap[product.availability] ?? null;
+  const itemCondition = mapSchemaCondition(product.condition);
+  const rawProduct = product as unknown as Record<string, unknown>;
+  const sku = typeof rawProduct["sku"] === "string" && rawProduct["sku"] ? rawProduct["sku"] : null;
+
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    url: `${SITE_ORIGIN}/shop/${product.slug}`,
+    ...(imageUrl ? { image: imageUrl } : {}),
+    ...(product.short_description || product.description
+      ? { description: product.short_description ?? product.description }
+      : {}),
+    ...(sku ? { sku } : {}),
+    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand } } : {}),
+    ...(product.model ? { model: product.model } : {}),
+    offers: {
+      "@type": "Offer",
+      url: `${SITE_ORIGIN}/shop/${product.slug}`,
+      priceCurrency: "GBP",
+      ...(product.price_pence != null ? { price: (product.price_pence / 100).toFixed(2) } : {}),
+      ...(availabilityUrl ? { availability: availabilityUrl } : {}),
+      ...(itemCondition ? { itemCondition } : {}),
+      seller: {
+        "@type": "LocalBusiness",
+        name: "Phone Store Ormskirk",
+        url: SITE_ORIGIN,
+      },
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
 
 function ProductPage() {
   const { slug } = Route.useParams();
@@ -51,7 +193,7 @@ function ProductPage() {
   const [index, setIndex] = useState(0);
 
   if (isLoading) {
-    return <div className="container-page section-y text-sm text-muted-foreground">Loading…</div>;
+    return <div className="container-page section-y text-sm text-muted-foreground">Loading...</div>;
   }
   if (!product) throw notFound();
 
@@ -70,6 +212,27 @@ function ProductPage() {
   return (
     <section className="py-10 md:py-14 bg-background">
       <div className="container-page">
+        {/* Breadcrumb JSON-LD */}
+        <BreadcrumbSchema name={product.name} slug={slug} />
+        {/* Product JSON-LD */}
+        <ProductSchema product={product} />
+
+        {/* Visual breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1"
+        >
+          <Link to="/" className="hover:text-primary transition-colors">
+            Home
+          </Link>
+          <span aria-hidden>/</span>
+          <Link to="/shop" className="hover:text-primary transition-colors">
+            Shop
+          </Link>
+          <span aria-hidden>/</span>
+          <span className="text-foreground font-medium truncate max-w-[16rem]">{product.name}</span>
+        </nav>
+
         <Link
           to="/shop"
           className="press inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
@@ -148,7 +311,7 @@ function ProductPage() {
                 {formatPrice(product.price_pence) ?? "Ask in store"}
               </span>
               <span className="text-xs font-bold text-muted-foreground">
-                Over-the-counter collection · Aughton St
+                Over-the-counter collection ?? Aughton St
               </span>
             </div>
 
