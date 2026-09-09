@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin, Menu, Phone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo-opt.png";
 import { businessQuery } from "@/lib/queries";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
 import { directionsUrl } from "@/lib/format";
@@ -72,15 +72,23 @@ export function Header() {
             <div className="animate-header-ticker select-none">
               <div className="flex items-center gap-6 pr-6">
                 {TICKER_MESSAGES.map((msg, i) => (
-                  <span key={i} className="inline-flex items-center gap-6 whitespace-nowrap text-xs font-semibold text-on-brand/90">
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-6 whitespace-nowrap text-xs font-semibold text-on-brand/90"
+                  >
                     <span>{msg}</span>
-                    <span className="text-on-brand/40 select-none" aria-hidden="true">·</span>
+                    <span className="text-on-brand/40 select-none" aria-hidden="true">
+                      ·
+                    </span>
                   </span>
                 ))}
               </div>
               <div className="flex items-center gap-6 pr-6" aria-hidden="true">
                 {TICKER_MESSAGES.map((msg, i) => (
-                  <span key={`dup-${i}`} className="inline-flex items-center gap-6 whitespace-nowrap text-xs font-semibold text-on-brand/90">
+                  <span
+                    key={`dup-${i}`}
+                    className="inline-flex items-center gap-6 whitespace-nowrap text-xs font-semibold text-on-brand/90"
+                  >
                     <span>{msg}</span>
                     <span className="text-on-brand/40 select-none">·</span>
                   </span>
@@ -105,16 +113,12 @@ export function Header() {
       </div>
 
       <div className="container-page flex items-center justify-between gap-5 py-4">
-        <Link
-          to="/"
-          className="flex min-w-0 items-center gap-3"
-          onClick={() => setOpen(false)}
-        >
+        <Link to="/" className="flex min-w-0 items-center gap-3" onClick={() => setOpen(false)}>
           <img
             src={logoImg}
             alt="Phone Shop Ormskirk logo"
-            width={803}
-            height={582}
+            width={280}
+            height={210}
             className="h-13 w-auto shrink-0 md:h-14"
           />
           <span className="hidden min-w-0 flex-col leading-tight sm:flex lg:hidden xl:flex">
@@ -152,9 +156,10 @@ export function Header() {
           </a>
           <a
             href={telUrl(business)}
+            aria-label={`Call Phone Store Ormskirk on ${business?.phone ?? "07496 499992"}`}
             className="press inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-soft"
           >
-            <Phone className="size-4" aria-hidden />
+            <Phone className="size-4" aria-hidden="true" />
             <span className="hidden sm:inline">Call now</span>
           </a>
           <button

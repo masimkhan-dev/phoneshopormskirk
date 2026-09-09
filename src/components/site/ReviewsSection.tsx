@@ -38,7 +38,7 @@ export function ReviewsSection({ variant = "strip", limit }: Props) {
                   {rating.toFixed(1)}
                 </span>
                 <span>
-                  <span className="flex gap-1" aria-label={`Rated ${rating} out of 5 on Google`}>
+                  <span className="flex gap-1" aria-hidden="true">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
@@ -47,10 +47,11 @@ export function ReviewsSection({ variant = "strip", limit }: Props) {
                             ? "fill-primary text-primary"
                             : "text-muted-foreground/35"
                         }`}
-                        aria-hidden
+                        aria-hidden="true"
                       />
                     ))}
                   </span>
+                  <span className="sr-only">Rated {rating.toFixed(1)} out of 5 on Google</span>
                   <span className="mt-2.5 block text-base font-bold text-muted-foreground">
                     {count ? `Based on ${count} Google reviews` : "Google rating"}
                   </span>

@@ -1,16 +1,10 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, dehydrate, hydrate } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
-const ADMIN_HOSTNAMES = new Set([
-  "admin.phonestoreormskirk.co.uk",
-  "admin.localhost",
-]);
+const ADMIN_HOSTNAMES = new Set(["admin.phonestoreormskirk.co.uk", "admin.localhost"]);
 
-const PUBLIC_HOSTNAMES = new Set([
-  "phonestoreormskirk.co.uk",
-  "www.phonestoreormskirk.co.uk",
-]);
+const PUBLIC_HOSTNAMES = new Set(["phonestoreormskirk.co.uk", "www.phonestoreormskirk.co.uk"]);
 
 function isAdminHost(hostname: string): boolean {
   return ADMIN_HOSTNAMES.has(hostname.toLowerCase());
@@ -33,11 +27,26 @@ function isAuthPath(pathname: string): boolean {
 }
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60,
+      },
+    },
+  });
 
   const router = createRouter({
     routeTree,
     context: { queryClient },
+    dehydrate: (() => ({
+      queryClientState: dehydrate(queryClient),
+    })) as never,
+    hydrate: (dehydrated: unknown) => {
+      const state = dehydrated as { queryClientState?: Parameters<typeof hydrate>[1] } | undefined;
+      if (state?.queryClientState) {
+        hydrate(queryClient, state.queryClientState);
+      }
+    },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
     rewrite: {
@@ -64,8 +73,7 @@ export const getRouter = () => {
           return url;
         }
 
-        const alreadyAdminPath =
-          pathname === "/admin" || pathname.startsWith("/admin/");
+        const alreadyAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
 
         if (!alreadyAdminPath) {
           const nextUrl = new URL(url);
@@ -96,4 +104,3 @@ export const getRouter = () => {
 
   return router;
 };
-

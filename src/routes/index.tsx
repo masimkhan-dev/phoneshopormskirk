@@ -2,10 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  ChevronRight,
   MapPin,
   MessageSquare,
-  Search,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -15,9 +13,12 @@ import {
 } from "lucide-react";
 
 import storefrontAsset from "@/assets/storefront.webp.asset.json";
-import heroImg from "@/assets/1.webp";
-import repairBench from "@/assets/repair-bench.jpg";
-import accessoriesImg from "@/assets/accessories.jpg";
+import heroImg400 from "@/assets/hero-400.webp";
+import heroImg640 from "@/assets/hero-640.webp";
+import heroImg800 from "@/assets/hero-800.webp";
+import heroImg1020 from "@/assets/hero-1020.webp";
+import repairBench from "@/assets/repair-bench.webp";
+import accessoriesImg from "@/assets/accessories.webp";
 import { businessQuery, productsQuery, repairServicesQuery } from "@/lib/queries";
 import { formatPrice, fullAddress } from "@/lib/format";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
@@ -191,11 +192,15 @@ function Index() {
           <div className="relative">
             <div className="float-slow relative isolate overflow-hidden rounded-3xl border border-white/20 shadow-lift ring-1 ring-black/20">
               <img
-                src={heroImg}
+                src={heroImg640}
+                srcSet={`${heroImg400} 400w, ${heroImg640} 640w, ${heroImg800} 800w, ${heroImg1020} 1020w`}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 648px"
                 alt="Phone Shop Ormskirk storefront on Aughton Street, lit up at night"
-                width={1200}
-                height={900}
+                width={1020}
+                height={1020}
                 loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 className="aspect-4/3 size-full object-cover lg:aspect-square"
               />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-6 pb-6 pt-24 text-on-brand sm:px-7 sm:pb-7">
@@ -380,7 +385,10 @@ function Index() {
             <img
               src={repairBench}
               alt="iPhone screen replacement at the Phone Shop Ormskirk workbench"
+              width={800}
+              height={600}
               loading="lazy"
+              decoding="async"
               className="aspect-4/3 size-full object-cover"
             />
           </Reveal>
@@ -636,7 +644,10 @@ function Index() {
                     ? "Phone Shop Ormskirk storefront on Aughton Street"
                     : "Phone cases, chargers and earbuds in store at Phone Shop Ormskirk"
                 }
+                width={600}
+                height={450}
                 loading="lazy"
+                decoding="async"
                 className="aspect-4/3 size-full object-cover"
               />
             </div>
@@ -648,7 +659,10 @@ function Index() {
                     ? "Phone repair technician at work in the Ormskirk shop"
                     : "Repair counter at Phone Shop Ormskirk with tools and a handset"
                 }
+                width={600}
+                height={450}
                 loading="lazy"
+                decoding="async"
                 className="aspect-4/3 size-full object-cover"
               />
             </div>

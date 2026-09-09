@@ -30,7 +30,7 @@ export function GoogleRating({ tone = "light", className = "", showWriteCta = fa
             : "border-border bg-card text-foreground"
         }`}
       >
-        <span className="flex gap-0.5" aria-label={`Rated ${rating} out of 5 on Google`}>
+        <span className="flex gap-0.5" aria-hidden="true">
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
@@ -43,13 +43,18 @@ export function GoogleRating({ tone = "light", className = "", showWriteCta = fa
                     ? "text-on-brand/35"
                     : "text-muted-foreground/40"
               }`}
-              aria-hidden
+              aria-hidden="true"
             />
           ))}
         </span>
+        <span className="sr-only">Rated {rating.toFixed(1)} out of 5 on Google</span>
         {rating.toFixed(1)}
         {count ? (
-          <span className={onBrand ? "font-medium text-on-brand/75" : "font-medium text-muted-foreground"}>
+          <span
+            className={
+              onBrand ? "font-medium text-on-brand/75" : "font-medium text-muted-foreground"
+            }
+          >
             · {count} Google reviews
           </span>
         ) : null}

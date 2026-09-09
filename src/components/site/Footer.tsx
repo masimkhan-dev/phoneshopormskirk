@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CreditCard, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
 
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo-opt.png";
 import { businessQuery } from "@/lib/queries";
 import { directionsUrl, fullAddress, sortedHours, todayName } from "@/lib/format";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
@@ -64,9 +64,10 @@ export function Footer() {
             <img
               src={logoImg}
               alt="Phone Shop Ormskirk logo"
-              width={803}
-              height={582}
+              width={280}
+              height={210}
               loading="lazy"
+              decoding="async"
               className="h-14 w-auto rounded-lg bg-white/95 p-1.5"
             />
             <span className="text-lg font-extrabold tracking-tight text-white">
