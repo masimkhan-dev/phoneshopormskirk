@@ -725,6 +725,62 @@
     word-break: break-word;
     overflow-wrap: anywhere;
   }
+
+  /* Radix modal cleanup for in-place document reprinting */
+  body.is-printing-modal .admin-shell,
+  body:has([data-reprint-dialog="true"]) .admin-shell {
+    display: none !important;
+  }
+
+  body.is-printing-modal [data-state]:not([role="dialog"]),
+  body:has([data-reprint-dialog="true"]) [data-state]:not([role="dialog"]),
+  div[data-radix-portal] > div.fixed.inset-0,
+  [data-radix-dialog-overlay] {
+    display: none !important;
+  }
+
+  body.is-printing-modal [role="dialog"] > button,
+  body:has([data-reprint-dialog="true"]) [role="dialog"] > button {
+    display: none !important;
+  }
+
+  body.is-printing-modal [role="dialog"],
+  body:has([data-reprint-dialog="true"]) [role="dialog"],
+  .reprint-dialog-content {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  body.is-printing-modal .reprint-preview-container,
+  body:has([data-reprint-dialog="true"]) .reprint-preview-container,
+  body.is-printing-modal .reprint-preview-inner,
+  body:has([data-reprint-dialog="true"]) .reprint-preview-inner {
+    display: block !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
 }
 
 /* Long words (IMEIs, emails) never push a receipt past 80mm */

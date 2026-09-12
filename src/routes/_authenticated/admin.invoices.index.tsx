@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { ExternalLink, Printer, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { ReprintInvoiceDialog } from "@/components/admin/ReprintInvoiceDialog";
 import {
   EmptyState,
   FilterPills,
@@ -15,14 +16,11 @@ import {
   Td,
   Th,
 } from "@/components/admin/ui";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { money, ukDateTime } from "@/lib/admin/money";
-import {
-  getInvoiceDeviceSummary,
-  invoicesQuery,
-  type InvoiceFilter,
-} from "@/lib/admin/queries";
+import { getInvoiceDeviceSummary, invoicesQuery, type InvoiceFilter } from "@/lib/admin/queries";
 
 export const Route = createFileRoute("/_authenticated/admin/invoices/")({
   component: Invoices,
@@ -43,6 +41,8 @@ function Invoices() {
     period: "month",
   });
   const { data = [], isLoading } = useQuery(invoicesQuery(filter));
+
+  const [reprintInvoiceId, setReprintInvoiceId] = useState<string | null>(null);
 
   // Client-extended search for device, imei, customer name, phone, and invoice number
   const filteredData = useMemo(() => {
@@ -98,7 +98,7 @@ function Invoices() {
   }, [filteredData]);
 
   return (
-    <div className="space-y-4">
+    <div className="invoices-list-page space-y-4">
       <PageHeader
         title="Invoices"
         description="Every repair, sale, phone purchase and retail document with device snapshots."
@@ -111,9 +111,7 @@ function Invoices() {
           <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
             Total Invoices
           </p>
-          <p className="text-lg font-extrabold text-foreground">
-            {totals.count}
-          </p>
+          <p className="text-lg font-extrabold text-foreground">{totals.count}</p>
         </div>
 
         {/* Repairs - Blue */}
@@ -171,7 +169,9 @@ function Invoices() {
           <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
             Outstanding
           </p>
-          <p className={`text-lg font-extrabold ${totals.outstanding > 0 ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground"}`}>
+          <p
+            className={`text-lg font-extrabold ${totals.outstanding > 0 ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground"}`}
+          >
             {money(totals.outstanding)}
           </p>
         </div>
@@ -234,6 +234,7 @@ function Invoices() {
                     <Th className="w-24 text-right">Paid</Th>
                     <Th className="w-24 text-right">Balance</Th>
                     <Th className="w-24 text-center">Status</Th>
+                    <Th className="w-28 text-right">Actions</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -254,7 +255,9 @@ function Invoices() {
                           {KIND_LABEL[inv.kind] ?? inv.kind}
                         </Td>
                         <Td className="font-semibold truncate max-w-[9rem]">
-                          {inv.customers?.name ?? <span className="text-muted-foreground font-normal">Walk-in</span>}
+                          {inv.customers?.name ?? (
+                            <span className="text-muted-foreground font-normal">Walk-in</span>
+                          )}
                         </Td>
                         <Td className="font-medium text-foreground">
                           <span className="line-clamp-1">{device}</span>
@@ -287,6 +290,30 @@ function Invoices() {
                             <PaymentStatusBadge status={inv.payment_status} />
                           )}
                         </Td>
+                        <Td className="text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2 text-xs font-semibold"
+                              onClick={() => setReprintInvoiceId(inv.id)}
+                            >
+                              <Printer className="mr-1 size-3.5" />
+                              Reprint
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-muted-foreground hover:text-foreground"
+                              asChild
+                              title="View Details"
+                            >
+                              <Link to="/admin/invoices/$invoiceId" params={{ invoiceId: inv.id }}>
+                                <ExternalLink className="size-3.5" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </Td>
                       </tr>
                     );
                   })}
@@ -299,7 +326,10 @@ function Invoices() {
               {filteredData.map((inv) => {
                 const { device, imei } = getInvoiceDeviceSummary(inv);
                 return (
-                  <div key={inv.id} className="p-3 space-y-1.5 hover:bg-surface/50 transition-colors">
+                  <div
+                    key={inv.id}
+                    className="p-3 space-y-1.5 hover:bg-surface/50 transition-colors"
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <Link
                         to="/admin/invoices/$invoiceId"
@@ -335,6 +365,33 @@ function Invoices() {
                         </span>
                       )}
                     </div>
+
+                    <div className="flex items-center justify-between pt-1.5 border-t border-admin-border/50 text-xs">
+                      <span className="text-[0.72rem] text-muted-foreground">
+                        {ukDateTime(inv.created_at)}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-[0.7rem] font-semibold"
+                          onClick={() => setReprintInvoiceId(inv.id)}
+                        >
+                          <Printer className="mr-1 size-3" />
+                          Reprint
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1.5 text-[0.7rem] text-muted-foreground"
+                          asChild
+                        >
+                          <Link to="/admin/invoices/$invoiceId" params={{ invoiceId: inv.id }}>
+                            View
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -347,6 +404,12 @@ function Invoices() {
           />
         )}
       </Section>
+
+      <ReprintInvoiceDialog
+        invoiceId={reprintInvoiceId}
+        open={Boolean(reprintInvoiceId)}
+        onOpenChange={(open) => !open && setReprintInvoiceId(null)}
+      />
     </div>
   );
 }

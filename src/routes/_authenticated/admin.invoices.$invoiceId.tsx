@@ -46,14 +46,20 @@ import { invoiceQuery } from "@/lib/admin/queries";
 import { useHotkeys } from "@/lib/admin/useHotkeys";
 
 export const Route = createFileRoute("/_authenticated/admin/invoices/$invoiceId")({
-  validateSearch: (search: Record<string, unknown>): { print?: "1" } =>
-    search['print'] === "1" ? { print: "1" } : {},
+  validateSearch: (search: Record<string, unknown>): { print?: "1"; format?: "a4" | "thermal" } => {
+    const res: { print?: "1"; format?: "a4" | "thermal" } = {};
+    if (search["print"] === "1") res.print = "1";
+    if (search["format"] === "thermal" || search["format"] === "a4") {
+      res.format = search["format"];
+    }
+    return res;
+  },
   component: InvoiceDetail,
 });
 
 function InvoiceDetail() {
   const { invoiceId } = Route.useParams();
-  const { print } = Route.useSearch();
+  const { print, format: queryFormat } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useAdminSession();
@@ -68,12 +74,14 @@ function InvoiceDetail() {
   const [payRef, setPayRef] = useState("");
   const [payNotes, setPayNotes] = useState("");
   const [isSplit, setIsSplit] = useState(false);
-  const [splits, setSplits] = useState<Array<{ id: string; method: string; amount: string; ref: string }>>([
+  const [splits, setSplits] = useState<
+    Array<{ id: string; method: string; amount: string; ref: string }>
+  >([
     { id: "1", method: "CASH", amount: "", ref: "" },
     { id: "2", method: "CARD", amount: "", ref: "" },
   ]);
   const [voidOpen, setVoidOpen] = useState(false);
-  const [format, setFormat] = useState<PrintFormat>("a4");
+  const [format, setFormat] = useState<PrintFormat>(queryFormat ?? "a4");
   const [reason, setReason] = useState("");
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundAmount, setRefundAmount] = useState("");
@@ -84,9 +92,10 @@ function InvoiceDetail() {
   useEffect(() => {
     if (print !== "1" || !data || printed.current) return undefined;
     printed.current = true;
-    const timer = setTimeout(() => printDocument("a4"), 350);
+    const targetFormat = queryFormat ?? format;
+    const timer = setTimeout(() => printDocument(targetFormat), 350);
     return () => clearTimeout(timer);
-  }, [print, data]);
+  }, [print, data, queryFormat, format]);
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["admin"] });
@@ -126,8 +135,7 @@ function InvoiceDetail() {
   });
 
   const voidInvoice = useMutation({
-    mutationFn: async () =>
-      callRpc("void_invoice", { p: { invoice_id: invoiceId, reason } }),
+    mutationFn: async () => callRpc("void_invoice", { p: { invoice_id: invoiceId, reason } }),
     onSuccess: () => {
       toast.success("Record voided. Stock and balances have been restored.");
       setVoidOpen(false);
@@ -183,10 +191,7 @@ function InvoiceDetail() {
 
   const { invoice, items, payments } = data;
 
-  const splitSumPence = splits.reduce(
-    (sum, s) => sum + Math.max(poundsToPence(s.amount), 0),
-    0,
-  );
+  const splitSumPence = splits.reduce((sum, s) => sum + Math.max(poundsToPence(s.amount), 0), 0);
   const effectiveAmountPence = isSplit ? splitSumPence : poundsToPence(amount);
   const overpaying = effectiveAmountPence > invoice.balance_pence;
   const tenderedPence = poundsToPence(tendered);
@@ -210,7 +215,7 @@ function InvoiceDetail() {
               </Button>
               <Button variant="outline" onClick={() => printDocument(format)}>
                 <Printer className="mr-2 size-4" />
-                Print {format === "a4" ? "A4" : "receipt"}
+                Reprint {format === "a4" ? "A4" : "Receipt"}
               </Button>
               {invoice.status === "FINAL" && invoice.balance_pence > 0 && (
                 <Button onClick={openPayment}>Take payment</Button>
@@ -267,9 +272,19 @@ function InvoiceDetail() {
       </div>
 
       {format === "a4" ? (
-        <InvoiceDocument invoice={invoice} items={items} payments={payments} termsRecord={data.terms} />
+        <InvoiceDocument
+          invoice={invoice}
+          items={items}
+          payments={payments}
+          termsRecord={data.terms}
+        />
       ) : (
-        <ReceiptDocument invoice={invoice} items={items} payments={payments} termsRecord={data.terms} />
+        <ReceiptDocument
+          invoice={invoice}
+          items={items}
+          payments={payments}
+          termsRecord={data.terms}
+        />
       )}
 
       <FormDialog
@@ -351,7 +366,9 @@ function InvoiceDetail() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">Quick amounts</span>
                 {[invoice.balance_pence, Math.round(invoice.balance_pence / 2), 2000, 5000, 10000]
-                  .filter((v, i, arr) => v > 0 && v <= invoice.balance_pence && arr.indexOf(v) === i)
+                  .filter(
+                    (v, i, arr) => v > 0 && v <= invoice.balance_pence && arr.indexOf(v) === i,
+                  )
                   .map((v) => (
                     <Button
                       key={v}
@@ -543,16 +560,14 @@ function InvoiceDetail() {
         </p>
       </FormDialog>
 
-
-
       <Dialog open={voidOpen} onOpenChange={setVoidOpen}>
         <DialogContent className="no-print">
           <DialogHeader>
             <DialogTitle>Void {invoice.invoice_number}?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Nothing is deleted. The record stays in the books marked as voided, stock is put
-            back and payments are reversed.
+            Nothing is deleted. The record stays in the books marked as voided, stock is put back
+            and payments are reversed.
           </p>
           <Field label="Reason" htmlFor="reason">
             <Textarea
@@ -657,15 +672,7 @@ function InvoiceDetail() {
   );
 }
 
-function SummaryRow({
-  label,
-  value,
-  strong,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-}) {
+function SummaryRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex justify-between gap-3">
       <dt className={strong ? "font-bold" : "text-muted-foreground"}>{label}</dt>
