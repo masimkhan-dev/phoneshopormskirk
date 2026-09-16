@@ -32,6 +32,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { FaqList } from "@/components/site/FaqList";
 import { WhyChooseUs } from "@/components/site/WhyChooseUs";
+import { FeaturedGallery } from "@/components/site/FeaturedGallery";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -596,6 +597,9 @@ function Index() {
       <section className="section-home bg-background">
         <WhyChooseUs />
       </section>
+
+      {/* 7b — FEATURED GALLERY */}
+      <FeaturedGallery />
 
       {/* 8 — GOOGLE REVIEWS */}
       <section className="section-home bg-surface border-y border-border/80">

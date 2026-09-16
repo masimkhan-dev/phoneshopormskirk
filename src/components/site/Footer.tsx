@@ -106,6 +106,7 @@ export function Footer() {
               { to: "/shop", label: "Phones & Accessories" },
               { to: "/sell-your-phone", label: "Sell / Trade In" },
               { to: "/unlocking", label: "Phone Unlocking" },
+              { to: "/gallery", label: "Shop Gallery" },
               { to: "/reviews", label: "Reviews" },
               { to: "/faq", label: "FAQs" },
               { to: "/phone-repair-ormskirk", label: "Phone Repair in Ormskirk" },

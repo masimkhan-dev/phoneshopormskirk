@@ -17,6 +17,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as PhoneRepairOrmskirkRouteImport } from './routes/phone-repair-ormskirk'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RepairsRouteImport } from './routes/repairs'
@@ -94,6 +95,11 @@ const FaqRoute = FaqRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryRoute = GalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PhoneRepairOrmskirkRoute = PhoneRepairOrmskirkRouteImport.update({
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/gallery': typeof GalleryRoute
   '/phone-repair-ormskirk': typeof PhoneRepairOrmskirkRoute
   '/privacy': typeof PrivacyRoute
   '/repairs': typeof RepairsRoute
@@ -371,6 +378,7 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/gallery': typeof GalleryRoute
   '/phone-repair-ormskirk': typeof PhoneRepairOrmskirkRoute
   '/privacy': typeof PrivacyRoute
   '/repairs': typeof RepairsRoute
@@ -420,6 +428,7 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/gallery': typeof GalleryRoute
   '/phone-repair-ormskirk': typeof PhoneRepairOrmskirkRoute
   '/privacy': typeof PrivacyRoute
   '/repairs': typeof RepairsRoute
@@ -470,6 +479,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/faq'
     | '/forgot-password'
+    | '/gallery'
     | '/phone-repair-ormskirk'
     | '/privacy'
     | '/repairs'
@@ -518,6 +528,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/faq'
     | '/forgot-password'
+    | '/gallery'
     | '/phone-repair-ormskirk'
     | '/privacy'
     | '/repairs'
@@ -566,6 +577,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/faq'
     | '/forgot-password'
+    | '/gallery'
     | '/phone-repair-ormskirk'
     | '/privacy'
     | '/repairs'
@@ -616,6 +628,7 @@ export interface RootRouteChildren {
   CookiesRoute: typeof CookiesRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GalleryRoute: typeof GalleryRoute
   PhoneRepairOrmskirkRoute: typeof PhoneRepairOrmskirkRoute
   PrivacyRoute: typeof PrivacyRoute
   RepairsRoute: typeof RepairsRoute
@@ -686,6 +699,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery': {
+      id: '/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/phone-repair-ormskirk': {
@@ -1047,6 +1067,7 @@ const rootRouteChildren: RootRouteChildren = {
   CookiesRoute: CookiesRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GalleryRoute: GalleryRoute,
   PhoneRepairOrmskirkRoute: PhoneRepairOrmskirkRoute,
   PrivacyRoute: PrivacyRoute,
   RepairsRoute: RepairsRoute,

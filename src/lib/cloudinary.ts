@@ -2,12 +2,13 @@
  * Cloudinary client utilities for image optimization, file validation, and direct browser uploads.
  */
 
-export type CloudinaryVariant = "CARD" | "DETAIL" | "THUMBNAIL";
+export type CloudinaryVariant = "CARD" | "DETAIL" | "THUMBNAIL" | "GALLERY";
 
 const TRANSFORMS: Record<CloudinaryVariant, string> = {
   CARD: "w_400,h_400,c_fill,f_auto,q_auto",
   DETAIL: "w_900,c_limit,f_auto,q_auto",
   THUMBNAIL: "w_120,h_120,c_fill,f_auto,q_auto",
+  GALLERY: "w_800,c_limit,f_auto,q_auto",
 };
 
 /**

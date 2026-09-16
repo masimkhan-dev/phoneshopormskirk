@@ -14,6 +14,7 @@ const NAV = [
   { to: "/repairs", label: "Repairs" },
   { to: "/shop", label: "Shop" },
   { to: "/sell-your-phone", label: "Sell Your Phone" },
+  { to: "/gallery", label: "Gallery" },
   { to: "/unlocking", label: "Unlocking" },
   { to: "/reviews", label: "Reviews" },
   { to: "/contact", label: "Contact" },
