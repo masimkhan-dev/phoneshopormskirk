@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Loader2, Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
+import { useDebounce } from "@/hooks/useDebounce";
 
 import {
   CheckTile,
@@ -51,12 +53,12 @@ const blankNewPhone = {
   imei: "",
   serial: "",
   storage: "128GB",
-  colour: "Midnight",
+  colour: "",
   network: "Unlocked",
-  condition: "GOOD",
-  battery_health: "90%",
-  cost: "",
-  price: "",
+  condition: "EXCELLENT",
+  battery_health: "",
+  purchase_cost: "",
+  selling_price: "",
   notes: "",
 };
 
@@ -69,7 +71,18 @@ function Stock() {
     condition: "",
     publicOnly: false,
   });
-  const { data = [], isLoading } = useQuery(stockQuery(filter));
+  const debouncedSearch = useDebounce(filter.search, 300);
+  const activeFilter = useMemo<StockFilter>(
+    () => ({
+      search: debouncedSearch,
+      status: filter.status,
+      brand: filter.brand,
+      condition: filter.condition,
+      publicOnly: filter.publicOnly,
+    }),
+    [debouncedSearch, filter.status, filter.brand, filter.condition, filter.publicOnly],
+  );
+  const { data = [], isLoading } = useQuery(stockQuery(activeFilter));
 
   // Edit price / visibility
   const [editing, setEditing] = useState<StockItem | null>(null);
@@ -84,7 +97,7 @@ function Stock() {
 
   function openEdit(item: StockItem) {
     setEditing(item);
-    setPrice(item.selling_price_pence ? penceToPounds(item.selling_price_pence) : "");
+    setPrice(item.selling_price_pence != null ? (item.selling_price_pence / 100).toString() : "");
     setVisible(item.public_visibility);
     setFeatured(item.featured);
     setNotes(item.notes ?? "");
@@ -96,11 +109,11 @@ function Stock() {
   }
 
   const pricePence = poundsToPence(price);
-  const newPhoneCostPence = poundsToPence(newPhone.cost);
-  const newPhonePricePence = poundsToPence(newPhone.price);
+  const newPhoneCostPence = poundsToPence(newPhone.purchase_cost);
+  const newPhonePricePence = poundsToPence(newPhone.selling_price);
   const newPhoneMargin = newPhonePricePence - newPhoneCostPence;
 
-  const save = useMutation({
+  const updatePrice = useMutation({
     mutationFn: async () =>
       callRpc("update_stock_item", {
         p: {
@@ -114,7 +127,7 @@ function Stock() {
     onSuccess: () => {
       toast.success("Phone updated successfully.");
       setEditing(null);
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stock"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -141,7 +154,7 @@ function Stock() {
       toast.success("Existing handset added to stock successfully.");
       setNewPhoneOpen(false);
       setNewPhone({ ...blankNewPhone });
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stock"] });
     },
     onError: (error: Error) => toast.error(error.message || "Failed to add phone stock."),
   });
@@ -390,8 +403,8 @@ function Stock() {
             <Button variant="outline" size="sm" onClick={() => setEditing(null)}>
               Cancel
             </Button>
-            <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
-              {save.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+            <Button size="sm" onClick={() => updatePrice.mutate()} disabled={updatePrice.isPending}>
+              {updatePrice.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
               Save changes
             </Button>
           </>
@@ -539,8 +552,8 @@ function Stock() {
             <Field label="Purchase / Cost price (£)" htmlFor="np-cost">
               <MoneyInput
                 id="np-cost"
-                value={newPhone.cost}
-                onChange={(v) => setNewPhone({ ...newPhone, cost: v })}
+                value={newPhone.purchase_cost}
+                onChange={(v) => setNewPhone({ ...newPhone, purchase_cost: v })}
                 placeholder="0.00"
               />
             </Field>
@@ -548,8 +561,8 @@ function Stock() {
             <Field label="Selling price (£)" htmlFor="np-price">
               <MoneyInput
                 id="np-price"
-                value={newPhone.price}
-                onChange={(v) => setNewPhone({ ...newPhone, price: v })}
+                value={newPhone.selling_price}
+                onChange={(v) => setNewPhone({ ...newPhone, selling_price: v })}
                 placeholder="0.00"
               />
             </Field>

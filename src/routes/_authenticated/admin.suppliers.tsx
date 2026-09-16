@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useDebounce } from "@/hooks/useDebounce";
 import { callRpc } from "@/lib/admin/db";
 import { suppliersQuery, type Supplier } from "@/lib/admin/queries";
 
@@ -40,7 +41,8 @@ const blank = {
 function Suppliers() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const { data = [], isLoading } = useQuery(suppliersQuery(search));
+  const debouncedSearch = useDebounce(search, 300);
+  const { data = [], isLoading } = useQuery(suppliersQuery(debouncedSearch));
   const [form, setForm] = useState<typeof blank | null>(null);
 
   const save = useMutation({
@@ -59,7 +61,7 @@ function Suppliers() {
     onSuccess: () => {
       toast.success("Supplier saved successfully.");
       setForm(null);
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "suppliers"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });

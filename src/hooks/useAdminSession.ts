@@ -20,7 +20,8 @@ export type AdminSession = {
 export function useAdminSession() {
   return useQuery<AdminSession | null>({
     queryKey: ["admin", "session"],
-    staleTime: 60_000,
+    staleTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const { data } = await supabase.auth.getUser();
       const user = data.user;

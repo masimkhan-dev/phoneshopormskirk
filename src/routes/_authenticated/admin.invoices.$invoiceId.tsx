@@ -98,7 +98,9 @@ function InvoiceDetail() {
   }, [print, data, queryFormat, format]);
 
   const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["admin"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "invoice", invoiceId] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "invoices"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "payments"] });
   };
 
   const takePayment = useMutation({

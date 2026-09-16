@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { callRpc } from "@/lib/admin/db";
+import { useDebounce } from "@/hooks/useDebounce";
 import { ukDate } from "@/lib/admin/money";
 import { customersQuery, type Customer } from "@/lib/admin/queries";
 
@@ -45,7 +46,8 @@ const blank = {
 function Customers() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const { data = [], isLoading } = useQuery(customersQuery(search));
+  const debouncedSearch = useDebounce(search, 300);
+  const { data = [], isLoading } = useQuery(customersQuery(debouncedSearch));
   const [form, setForm] = useState<typeof blank | null>(null);
 
   const save = useMutation({
@@ -64,7 +66,7 @@ function Customers() {
     onSuccess: () => {
       toast.success("Customer saved successfully.");
       setForm(null);
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "customers"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });

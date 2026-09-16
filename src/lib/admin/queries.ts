@@ -94,7 +94,7 @@ export type Invoice = {
   amount_paid_pence: number;
   balance_pence: number;
   payment_status: "UNPAID" | "PARTIAL" | "PAID";
-  snapshot: Record<string, unknown>;
+  snapshot?: Record<string, unknown> | null;
   notes: string | null;
   void_reason: string | null;
   refunded_pence: number;
@@ -125,6 +125,7 @@ export type InvoiceDeviceSummary = {
 /**
  * Extracts transaction-time snapshot device and IMEI data immutably.
  * Works across repairs, phone sales, phone purchases, and product sales.
+ * Gracefully derives device info from item meta when snapshot is omitted.
  */
 export function getInvoiceDeviceSummary(inv: {
   kind: string;
@@ -149,8 +150,10 @@ export function getInvoiceDeviceSummary(inv: {
 
   if (inv.kind === "REPAIR") {
     const r = snapshot.repair;
-    const brand = r?.device_brand?.trim() || "";
-    const model = r?.device_model?.trim() || "";
+    const metaBrand = firstItem?.meta ? String(firstItem.meta["device_brand"] ?? firstItem.meta["brand"] ?? "").trim() : "";
+    const metaModel = firstItem?.meta ? String(firstItem.meta["device_model"] ?? firstItem.meta["model"] ?? "").trim() : "";
+    const brand = r?.device_brand?.trim() || metaBrand;
+    const model = r?.device_model?.trim() || metaModel;
     const device = [brand, model].filter(Boolean).join(" ") || (firstItem?.description ?? "Repair");
     const imei =
       r?.imei?.trim() ||
@@ -161,8 +164,10 @@ export function getInvoiceDeviceSummary(inv: {
 
   if (inv.kind === "PHONE_SALE" || inv.kind === "PHONE_PURCHASE") {
     const s = snapshot.stock;
-    const brand = s?.brand?.trim() || "";
-    const model = s?.model?.trim() || "";
+    const metaBrand = firstItem?.meta ? String(firstItem.meta["brand"] ?? firstItem.meta["device_brand"] ?? "").trim() : "";
+    const metaModel = firstItem?.meta ? String(firstItem.meta["model"] ?? firstItem.meta["device_model"] ?? "").trim() : "";
+    const brand = s?.brand?.trim() || metaBrand;
+    const model = s?.model?.trim() || metaModel;
     const storage =
       s?.storage?.trim() ||
       (firstItem?.meta ? String(firstItem.meta["storage"] ?? "").trim() : "") ||
@@ -583,7 +588,7 @@ export const invoicesQuery = (filter: InvoiceFilter) =>
       let q = supabase
         .from("invoices")
         .select(
-          "*, customers(name, phone), invoice_items(id, description, quantity, unit_price_pence, line_total_pence, meta)",
+          "id, invoice_number, kind, status, customer_id, subtotal_pence, discount_pence, total_pence, amount_paid_pence, balance_pence, payment_status, notes, void_reason, refunded_pence, refunded_at, refund_reason, created_at, customers(name, phone), invoice_items(id, description, quantity, unit_price_pence, line_total_pence, meta)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
@@ -973,10 +978,12 @@ export const reportsQuery = (from: string, to: string) =>
           .lte("created_at", to),
         supabase
           .from("stock_items")
-          .select("id,brand,condition,status,purchase_cost_pence,selling_price_pence,created_at"),
+          .select("id,brand,condition,status,purchase_cost_pence,selling_price_pence,created_at")
+          .eq("status", "IN_STOCK"),
         supabase
           .from("products")
-          .select("id,name,quantity,reorder_level,cost_price_pence,price_pence,active"),
+          .select("id,name,quantity,reorder_level,cost_price_pence,price_pence,active")
+          .eq("active", true),
         supabase
           .from("daily_sales")
           .select("*")

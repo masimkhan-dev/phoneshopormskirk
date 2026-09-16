@@ -168,7 +168,8 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
         const remaining = prev.filter((img) => img.id !== image.id);
         return remaining.map((img, idx) => ({ ...img, sort_order: idx }));
       });
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Image deleted successfully.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete image.";
@@ -305,7 +306,8 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
       toast.success(
         isEdit ? "Product updated successfully." : "Product added to catalogue successfully.",
       );
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       if (onSuccess) {
         onSuccess(saved);
       } else {

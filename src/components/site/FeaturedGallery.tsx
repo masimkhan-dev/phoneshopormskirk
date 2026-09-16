@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/carousel";
 import { Reveal } from "@/components/site/Reveal";
 import { getCloudinaryImageUrl } from "@/lib/cloudinary";
-import { GALLERY_CATEGORIES, galleryItemsQuery, type GalleryItem } from "@/lib/gallery";
+import { GALLERY_CATEGORIES, featuredGalleryQuery, type GalleryItem } from "@/lib/gallery";
 
 /**
  * Calculates circular distance from current center slide (-2, -1, 0, 1, 2)
@@ -25,7 +25,7 @@ function getSlideOffset(index: number, current: number, total: number): number {
 }
 
 export function FeaturedGallery() {
-  const { data: allItems = [] } = useQuery(galleryItemsQuery());
+  const { data: allItems = [] } = useQuery(featuredGalleryQuery());
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);

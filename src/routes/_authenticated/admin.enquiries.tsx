@@ -45,7 +45,7 @@ function Enquiries() {
     },
     onSuccess: () => {
       toast.success("Enquiry updated successfully.");
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "enquiries"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });

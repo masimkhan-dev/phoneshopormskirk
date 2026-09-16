@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { publicSupabase, PRODUCT_SELECT } from "./supabase-public.server";
+import { publicSupabase, PRODUCT_SELECT, HOMEPAGE_PRODUCT_SELECT } from "./supabase-public.server";
 import type {
   BusinessSettings,
   CustomerReview,
@@ -34,12 +34,29 @@ export const getCategories = createServerFn({ method: "GET" }).handler(
   },
 );
 
+export const getHomepageProducts = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Product[]> => {
+    const { data, error } = await publicSupabase()
+      .from("products")
+      .select(HOMEPAGE_PRODUCT_SELECT)
+      .eq("public_visible", true)
+      .eq("active", true)
+      .order("sort_order")
+      .limit(16);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as Product[];
+  },
+);
+
 export const getProducts = createServerFn({ method: "GET" }).handler(
   async (): Promise<Product[]> => {
     const { data, error } = await publicSupabase()
       .from("products")
       .select(PRODUCT_SELECT)
-      .order("sort_order");
+      .eq("public_visible", true)
+      .eq("active", true)
+      .order("sort_order")
+      .limit(50);
     if (error) throw new Error(error.message);
     return (data ?? []) as unknown as Product[];
   },

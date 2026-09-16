@@ -4,6 +4,7 @@ import {
   getBusinessSettings,
   getCategories,
   getFaqs,
+  getHomepageProducts,
   getProductBySlug,
   getProducts,
   getRepairServices,
@@ -24,11 +25,18 @@ export const categoriesQuery = () =>
     staleTime: 5 * 60 * 1000,
   });
 
+export const homepageProductsQuery = () =>
+  queryOptions({
+    queryKey: ["products", "homepage"],
+    queryFn: () => getHomepageProducts(),
+    staleTime: 5 * 60 * 1000,
+  });
+
 export const productsQuery = () =>
   queryOptions({
     queryKey: ["products"],
     queryFn: () => getProducts(),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
 export const productQuery = (slug: string) =>

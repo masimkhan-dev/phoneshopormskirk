@@ -71,7 +71,7 @@ function QuickAddProductPage() {
       return { saved, addAnother: opts.addAnother };
     },
     onSuccess: ({ saved, addAnother }) => {
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
 
       if (addAnother) {
         toast.success(`"${saved.name}" added to counter stock. Ready for next item.`);

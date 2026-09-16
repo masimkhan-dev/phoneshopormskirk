@@ -506,11 +506,18 @@ export function CheckTile({
 /* --------------------------------- badges ---------------------------------- */
 
 const BADGE_TONES = {
-  neutral: "bg-muted text-muted-foreground",
-  green: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  amber: "bg-amber-50 text-amber-700 ring-amber-200",
-  red: "bg-tint text-primary ring-primary-soft",
-  ink: "bg-ink text-on-brand",
+  neutral:
+    "bg-slate-100 text-slate-700 border-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700/60",
+  green:
+    "bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40",
+  amber:
+    "bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40",
+  red:
+    "bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40",
+  blue:
+    "bg-sky-50 text-sky-700 border-sky-200/80 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/40",
+  ink:
+    "bg-zinc-800 text-zinc-100 border-zinc-700 dark:bg-zinc-700 dark:text-zinc-100",
 } as const;
 
 export function StatusBadge({
@@ -523,7 +530,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide ring-1 ring-inset ring-transparent",
+        "inline-flex items-center rounded-md px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-wider border transition-colors",
         BADGE_TONES[tone],
       )}
     >
@@ -550,7 +557,7 @@ export function RecordStatusBadge({ status }: { status: string }) {
     RESERVED: { tone: "amber", label: "Reserved" },
     SOLD: { tone: "ink", label: "Sold" },
     REMOVED: { tone: "neutral", label: "Removed" },
-    NEW: { tone: "red", label: "New" },
+    NEW: { tone: "blue", label: "New" },
     CONTACTED: { tone: "amber", label: "Contacted" },
     CONVERTED: { tone: "green", label: "Converted" },
     CLOSED: { tone: "neutral", label: "Closed" },
@@ -561,65 +568,89 @@ export function RecordStatusBadge({ status }: { status: string }) {
 
 /* ---------------------------------- stats --------------------------------- */
 
+const ICON_TONES = {
+  plain: "bg-muted/70 text-muted-foreground border border-border/50",
+  brand: "bg-primary/10 text-primary border border-primary/20",
+  emerald:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40",
+  amber:
+    "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40",
+  red:
+    "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40",
+  blue:
+    "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400 border border-sky-200/60 dark:border-sky-800/40",
+  slate:
+    "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/50",
+  ink: "bg-zinc-800 text-zinc-100 border border-zinc-700",
+} as const;
+
 export function StatCard({
   label,
   value,
   sub,
   icon: Icon,
   tone = "plain",
+  size = "default",
   to,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon?: React.ElementType;
-  tone?: "plain" | "brand" | "ink";
+  tone?: "plain" | "brand" | "ink" | "emerald" | "amber" | "red" | "blue" | "slate";
+  size?: "default" | "lg";
   to?: string;
 }) {
+  const isZero = value === "0" || value === "£0.00" || value === "0.00";
+  const iconTone = isZero && (tone === "amber" || tone === "red") ? "plain" : tone;
+
   const body = (
     <div
       className={cn(
-        "admin-card flex h-full items-start justify-between gap-3 p-4",
-        tone === "brand" && "border-transparent bg-primary text-primary-foreground",
-        tone === "ink" && "border-transparent bg-ink text-on-brand",
-        to && "transition-shadow hover:shadow-soft",
+        "admin-card group flex h-full flex-col justify-between gap-3 p-3.5 sm:p-4 transition-all duration-150",
+        size === "lg" && "p-4 sm:p-5",
+        to && "hover:border-primary/40 hover:shadow-soft cursor-pointer",
       )}
     >
-      <div className="min-w-0">
-        <p
-          className={cn(
-            "text-[0.7rem] font-bold uppercase tracking-[0.08em]",
-            tone === "plain" ? "text-muted-foreground" : "opacity-80",
-          )}
-        >
-          {label}
-        </p>
-        <p className="mt-1 text-2xl font-extrabold tracking-tight">{value}</p>
-        {sub && (
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="min-w-0 flex-1">
+          <p className="text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground truncate">
+            {label}
+          </p>
           <p
             className={cn(
-              "mt-0.5 truncate text-xs",
-              tone === "plain" ? "text-muted-foreground" : "opacity-80",
+              "mt-1 font-extrabold tracking-tight text-foreground tabular-nums",
+              size === "lg" ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl",
+              isZero && "text-muted-foreground/80 font-bold",
             )}
           >
-            {sub}
+            {value}
           </p>
+        </div>
+        {Icon && (
+          <span
+            className={cn(
+              "grid size-9 shrink-0 place-items-center rounded-lg transition-transform duration-150 group-hover:scale-105",
+              ICON_TONES[iconTone] ?? ICON_TONES.plain,
+            )}
+          >
+            <Icon className="size-4.5" />
+          </span>
         )}
       </div>
-      {Icon && (
-        <span
-          className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-lg",
-            tone === "plain" ? "bg-tint text-primary" : "bg-white/15",
-          )}
-        >
-          <Icon className="size-4.5" />
-        </span>
+      {sub && (
+        <p className="text-xs text-muted-foreground/80 truncate">
+          {sub}
+        </p>
       )}
     </div>
   );
+
   return to ? (
-    <Link to={to} className="block">
+    <Link
+      to={to}
+      className="block h-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    >
       {body}
     </Link>
   ) : (
@@ -669,7 +700,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "admin-th border-b border-admin-border/80 bg-admin-panel px-3 py-2 text-left text-[0.72rem] font-bold uppercase tracking-wider text-muted-foreground",
+        "admin-th border-b border-admin-border/80 bg-muted/40 px-3.5 py-2.5 text-left text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground",
         className,
       )}
     >
@@ -688,7 +719,7 @@ export function Td({
   return (
     <td
       className={cn(
-        "border-b border-admin-border/60 px-3 py-2 text-xs align-middle leading-tight text-foreground",
+        "border-b border-admin-border/50 px-3.5 py-2.5 text-xs align-middle leading-tight text-foreground transition-colors",
         className,
       )}
     >

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   EmptyState,
@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
 import { ukDateTime } from "@/lib/admin/money";
 import { repairsQuery, type RepairFilter } from "@/lib/admin/queries";
 
@@ -32,7 +33,17 @@ function Repairs() {
     payment: "all",
     status: "all",
   });
-  const { data = [], isLoading } = useQuery(repairsQuery(filter));
+  const debouncedSearch = useDebounce(filter.search, 300);
+  const activeFilter = useMemo<RepairFilter>(
+    () => ({
+      search: debouncedSearch,
+      period: filter.period,
+      payment: filter.payment,
+      status: filter.status,
+    }),
+    [debouncedSearch, filter.period, filter.payment, filter.status],
+  );
+  const { data = [], isLoading } = useQuery(repairsQuery(activeFilter));
 
   return (
     <div className="space-y-4">

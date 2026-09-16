@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
 import { callRpc } from "@/lib/admin/db";
 import { adminProductsQuery, type AdminProduct } from "@/lib/admin/queries";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,8 @@ export const Route = createFileRoute("/_authenticated/admin/products/")({
 function Products() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const { data = [], isLoading } = useQuery(adminProductsQuery(search));
+  const debouncedSearch = useDebounce(search, 300);
+  const { data = [], isLoading } = useQuery(adminProductsQuery(debouncedSearch));
 
   // Quick Stock Adjustment Dialog state
   const [adjusting, setAdjusting] = useState<AdminProduct | null>(null);
@@ -53,7 +55,7 @@ function Products() {
       setAdjusting(null);
       setDelta("");
       setReason("");
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
     },
     onError: (error: Error) => toast.error(error.message || "Failed to adjust stock."),
   });

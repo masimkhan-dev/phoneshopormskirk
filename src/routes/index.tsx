@@ -19,7 +19,7 @@ import heroImg800 from "@/assets/hero-800.webp";
 import heroImg1020 from "@/assets/hero-1020.webp";
 import repairBench from "@/assets/repair-bench.webp";
 import accessoriesImg from "@/assets/accessories.webp";
-import { businessQuery, productsQuery, repairServicesQuery } from "@/lib/queries";
+import { businessQuery, homepageProductsQuery, repairServicesQuery } from "@/lib/queries";
 import { formatPrice, fullAddress } from "@/lib/format";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
 import { ProductCard } from "@/components/site/ProductCard";
@@ -114,7 +114,7 @@ const SIMPLE_STEPS = [
 function Index() {
   const { data: business } = useQuery(businessQuery());
   const { data: repairs = [] } = useQuery(repairServicesQuery());
-  const { data: products = [] } = useQuery(productsQuery());
+  const { data: products = [] } = useQuery(homepageProductsQuery());
   const featuredRepairs = repairs.filter((r) => r.featured).slice(0, 4);
   const inStockPhones = products
     .filter(

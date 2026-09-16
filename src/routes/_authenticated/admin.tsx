@@ -92,12 +92,15 @@ function AdminLayout() {
         className="no-print sticky top-0 z-50 border-b border-admin-border bg-admin-panel/95 shadow-soft backdrop-blur"
       >
         {/* Top row: Brand + Global Search + User Profile + Pin Toggle + Logout */}
-        <div className="flex items-center gap-3 px-4 py-2 sm:px-6">
-          <Link to="/admin" className="flex items-center gap-2.5">
-            <img src={logoImg} alt="" className="h-8 w-auto" />
+        <div className="flex items-center gap-3 px-4 py-2.5 sm:px-6">
+          <Link
+            to="/admin"
+            className="flex items-center gap-2.5 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <img src={logoImg} alt="" className="h-8 w-auto shrink-0" />
             <span className="hidden text-sm font-extrabold leading-tight sm:block">
               Phone Shop
-              <span className="block text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <span className="block text-[0.65rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 Shop system
               </span>
             </span>
@@ -106,34 +109,40 @@ function AdminLayout() {
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="ml-auto flex min-w-0 flex-1 max-w-md items-center gap-2 rounded-md border border-admin-border bg-surface px-3 py-1.5 text-left text-xs text-muted-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="ml-auto flex min-w-0 flex-1 max-w-xs sm:max-w-sm md:max-w-md items-center gap-2.5 rounded-lg border border-admin-border bg-surface/75 px-3 py-1.5 text-left text-xs text-muted-foreground shadow-2xs transition-colors hover:border-admin-border/90 hover:bg-surface hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
           >
-            <Search className="size-3.5 shrink-0" />
+            <Search className="size-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate">
-              Search customer, phone, IMEI, repair or invoice number…
+              Search customer, phone, IMEI, repair or invoice…
             </span>
-            <kbd className="ml-auto hidden rounded border border-admin-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-bold text-muted-foreground sm:inline-block">
+            <kbd className="ml-auto hidden rounded border border-admin-border/80 bg-muted/60 px-1.5 py-0.5 text-[0.65rem] font-bold text-muted-foreground sm:inline-block tracking-tight">
               /
             </kbd>
           </button>
 
-          <div className="hidden text-right sm:block">
-            <p className="text-xs font-bold leading-tight">
+          <div className="hidden border-l border-admin-border/60 pl-3 text-right sm:block">
+            <p className="text-xs font-bold leading-tight text-foreground">
               {session?.name ?? session?.email ?? "Staff"}
             </p>
-            <p className="text-[0.68rem] uppercase tracking-wide text-muted-foreground">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
               {session?.roles[0] ?? "Staff"}
             </p>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out" className="size-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={signOut}
+            aria-label="Sign out"
+            className="size-8 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-destructive"
+          >
             <LogOut className="size-3.5" />
           </Button>
 
           {/* Mobile Navigation Drawer */}
           <Sheet open={drawer} onOpenChange={setDrawer}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="lg:hidden" aria-label="Menu">
+              <Button variant="outline" size="icon" className="size-8 lg:hidden" aria-label="Menu">
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
@@ -153,7 +162,7 @@ function AdminLayout() {
       </header>
 
       {/* Main Content Area */}
-      <main className="px-4 py-2.5 sm:px-6 lg:px-8 print:p-0">
+      <main className="px-4 py-4 sm:px-6 lg:px-8 print:p-0">
         <Outlet />
       </main>
     </div>

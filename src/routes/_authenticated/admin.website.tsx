@@ -124,8 +124,9 @@ function WebsiteContent() {
     },
     onSuccess: () => {
       toast.success("Website content updated successfully.");
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
-      queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "faqs"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-reviews"] });
       queryClient.invalidateQueries({ queryKey: ["faqs"] });
     },
     onError: (error: Error) => toast.error(error.message),

@@ -10,6 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useDebounce } from "@/hooks/useDebounce";
 import { money } from "@/lib/admin/money";
 import { globalSearchQuery } from "@/lib/admin/queries";
 
@@ -23,7 +24,8 @@ export function GlobalSearch({
 }) {
   const navigate = useNavigate();
   const [term, setTerm] = useState("");
-  const { data } = useQuery(globalSearchQuery(term));
+  const debouncedTerm = useDebounce(term, 300);
+  const { data } = useQuery(globalSearchQuery(debouncedTerm));
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
