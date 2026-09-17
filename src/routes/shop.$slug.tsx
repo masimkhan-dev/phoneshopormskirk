@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, Package } from "lucide-react";
 
 import { businessQuery, productQuery } from "@/lib/queries";
-import { AVAILABILITY_LABEL, formatPrice } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { telUrl, whatsappUrl } from "@/lib/whatsapp";
 import { DirectionsButton } from "@/components/site/DirectionsButton";
 import { getCloudinaryImageUrl } from "@/lib/cloudinary";
@@ -197,24 +197,115 @@ function ProductPage() {
   }
   if (!product) throw notFound();
 
+  // ── Derived state ─────────────────────────────────────────────────────────
   const images = [...(product.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = images[Math.min(index, images.length - 1)];
-  const specs = Object.entries(product.specs ?? {});
   const soldOut = product.availability === "OUT_OF_STOCK";
-  const details = [
-    ["Brand", product.brand],
-    ["Model", product.model],
-    ["Condition", product.condition],
-    ["Storage", product.storage],
-    ["Colour", product.colour],
+  const isLimited = product.availability === "LIMITED";
+  const isRefurbished = product.condition?.toLowerCase().includes("refurb") ?? false;
+
+  // ── Spec helpers ──────────────────────────────────────────────────────────
+  const rawSpecs = (product.specs ?? {}) as Record<string, string>;
+
+  // Strip SEO-only keys so they never appear in the customer-facing table
+  const SEO_KEY = /^seo|^meta[\s_-]?(title|desc)/i;
+  const TYPED_KEYS = new Set(
+    ["brand", "model", "condition", "storage", "colour"].map((k) => k.toLowerCase()),
+  );
+
+  // Keys surfaced in their own dedicated sections — excluded from generic spec table
+  const DEDICATED_KEYS = new Set([
+    "warranty", "battery health", "battery_health",
+    "included accessories", "what's included", "includes",
+  ]);
+
+  // Read well-known optional fields from specs
+  const specsGet = (...keys: string[]): string | null => {
+    for (const k of keys) {
+      if (rawSpecs[k]) return rawSpecs[k];
+      // Case-insensitive fallback
+      const found = Object.entries(rawSpecs).find(([sk]) => sk.toLowerCase() === k.toLowerCase());
+      if (found) return found[1];
+    }
+    return null;
+  };
+
+  const warrantyValue = specsGet("Warranty");
+  const batteryHealth = specsGet("Battery Health", "battery_health");
+  const includedItems = specsGet("Included Accessories", "What's Included", "Includes");
+
+  // Typed core details for the spec table
+  const coreDetails: [string, string][] = [
+    ["Brand", product.brand ?? ""],
+    ["Model", product.model ?? ""],
+    ["Storage", product.storage ?? ""],
+    ["Condition", product.condition ?? ""],
+    ["Colour", product.colour ?? ""],
+    ...(batteryHealth ? [["Battery Health", batteryHealth] as [string, string]] : []),
+    ...(warrantyValue ? [["Warranty", warrantyValue] as [string, string]] : []),
   ].filter(([, v]) => Boolean(v)) as [string, string][];
+
+  // Extra freeform spec rows — SEO keys, typed keys, and dedicated-section keys stripped
+  const extraSpecs = Object.entries(rawSpecs).filter(([k]) => {
+    const lower = k.toLowerCase().trim();
+    return !SEO_KEY.test(k) && !TYPED_KEYS.has(lower) && !DEDICATED_KEYS.has(lower);
+  });
+
+  // Availability badge
+  const availabilityBadge = soldOut
+    ? { label: "Out of Stock", cls: "bg-muted text-muted-foreground" }
+    : isLimited
+      ? { label: "Limited Stock", cls: "bg-amber-500/15 text-amber-700" }
+      : { label: "In Stock", cls: "bg-emerald-500/15 text-emerald-700" };
+
+  // Shop address from business data or sensible fallback
+  const shopAddress =
+    business?.address_line1
+      ? `${business.address_line1}, ${business.city ?? "Ormskirk"}`
+      : "4 Aughton St, Ormskirk";
+
+  // WhatsApp URLs — rich product context for prefilled message
+  const productUrl = `${SITE_ORIGIN}/shop/${slug}`;
+  const priceStr = formatPrice(product.price_pence);
+
+  const whatsappReserveUrl = whatsappUrl(
+    business,
+    soldOut
+      ? {
+          kind: "stock",
+          product: product.name,
+          ...(priceStr ? { price: priceStr } : {}),
+          ...(product.condition ? { condition: product.condition } : {}),
+          ...(product.storage ? { storage: product.storage } : {}),
+          ...(product.model ? { model: product.model } : {}),
+          productUrl,
+        }
+      : {
+          kind: "product",
+          product: product.name,
+          ...(priceStr ? { price: priceStr } : {}),
+          ...(product.condition ? { condition: product.condition } : {}),
+          ...(product.storage ? { storage: product.storage } : {}),
+          ...(product.model ? { model: product.model } : {}),
+          productUrl,
+        },
+  );
+
+  // Gallery keyboard handler
+  function handleThumbKey(e: React.KeyboardEvent, i: number) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setIndex(i);
+    }
+    if (e.key === "ArrowRight") setIndex(Math.min(i + 1, images.length - 1));
+    if (e.key === "ArrowLeft") setIndex(Math.max(i - 1, 0));
+  }
 
   return (
     <section className="py-10 md:py-14 bg-background">
       <div className="container-page">
-        {/* Breadcrumb JSON-LD */}
+        {/* JSON-LD — untouched */}
         <BreadcrumbSchema name={product.name} slug={slug} />
-        {/* Product JSON-LD */}
         <ProductSchema product={product} />
 
         {/* Visual breadcrumb */}
@@ -222,13 +313,9 @@ function ProductPage() {
           aria-label="Breadcrumb"
           className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1"
         >
-          <Link to="/" className="hover:text-primary transition-colors">
-            Home
-          </Link>
+          <Link to="/" className="hover:text-primary transition-colors">Home</Link>
           <span aria-hidden>/</span>
-          <Link to="/shop" className="hover:text-primary transition-colors">
-            Shop
-          </Link>
+          <Link to="/shop" className="hover:text-primary transition-colors">Shop</Link>
           <span aria-hidden>/</span>
           <span className="text-foreground font-medium truncate max-w-[16rem]">{product.name}</span>
         </nav>
@@ -241,151 +328,334 @@ function ProductPage() {
           Back to shop
         </Link>
 
-        <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14">
-          {/* Gallery */}
+        {/* ── Main two-column grid ──────────────────────────────────────── */}
+        <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-16">
+
+          {/* ── LEFT: Gallery ──────────────────────────────────────────── */}
           <div>
-            <div className="overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-soft">
+            {/* Main image */}
+            <div className="overflow-hidden rounded-2xl border border-border/80 bg-surface shadow-soft">
               {active ? (
                 <img
                   src={getCloudinaryImageUrl(active.url, "DETAIL")}
-                  loading="lazy"
+                  loading="eager"
                   decoding="async"
-                  alt={active.alt_text ?? `${product.name} - Phone Store Ormskirk`}
-                  className="aspect-square size-full object-cover"
+                  alt={active.alt_text ?? `${product.name} – Phone Store Ormskirk`}
+                  className="aspect-square w-full object-contain p-6 sm:p-8"
                 />
               ) : (
-                <div className="flex aspect-square size-full items-center justify-center bg-muted/30 text-muted-foreground/40">
+                <div className="flex aspect-square items-center justify-center bg-muted/30 text-muted-foreground/40">
                   <Package className="size-20 stroke-[1.2]" />
                 </div>
               )}
             </div>
-            {images.length > 1 ? (
-              <div className="mt-4 flex flex-wrap gap-3">
-                {images.map((img, i) => (
+
+            {/* Thumbnail strip — only rendered when multiple images exist */}
+            {images.length > 1 && (
+              <div
+                className="mt-3 flex gap-2.5"
+                role="group"
+                aria-label="Product image thumbnails"
+              >
+                {images.slice(0, 4).map((img, i) => (
                   <button
                     key={img.id}
                     type="button"
                     onClick={() => setIndex(i)}
-                    className={`size-20 overflow-hidden rounded-xl border transition-all ${
+                    onKeyDown={(e) => handleThumbKey(e, i)}
+                    aria-label={`View image ${i + 1} of ${Math.min(images.length, 4)}`}
+                    aria-pressed={i === index}
+                    className={`size-[4.5rem] shrink-0 overflow-hidden rounded-xl border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                       i === index
-                        ? "border-primary ring-2 ring-primary/20 shadow-soft"
-                        : "border-border/80 hover:border-border"
+                        ? "border-primary shadow-soft"
+                        : "border-border/60 opacity-65 hover:border-border hover:opacity-100"
                     }`}
                   >
                     <img
                       src={getCloudinaryImageUrl(img.url, "THUMBNAIL")}
                       loading="lazy"
                       decoding="async"
-                      alt={img.alt_text ?? `${product.name} thumbnail ${i + 1}`}
+                      alt={img.alt_text ?? `${product.name} – image ${i + 1}`}
                       className="size-full object-cover"
                     />
                   </button>
                 ))}
               </div>
-            ) : null}
+            )}
           </div>
 
-          {/* Details */}
-          <div>
+          {/* ── RIGHT: Details panel ───────────────────────────────────── */}
+          <div className="flex flex-col">
+
+            {/* 1. Category eyebrow + availability */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="eyebrow">{product.product_categories?.name ?? "In store"}</span>
+              <span className="eyebrow">
+                {product.product_categories?.name ?? "Mobile Phones"}
+              </span>
               <span
-                className={`inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-bold uppercase tracking-wider ${
-                  soldOut
-                    ? "bg-muted text-muted-foreground"
-                    : product.availability === "LIMITED"
-                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                      : "bg-whatsapp/15 text-whatsapp-foreground dark:text-emerald-400"
-                }`}
+                className={`inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-bold uppercase tracking-wider ${availabilityBadge.cls}`}
               >
-                {AVAILABILITY_LABEL[product.availability] ?? product.availability}
+                {availabilityBadge.label}
               </span>
             </div>
 
-            <h1 className="mt-3 text-[clamp(2rem,4.5vw,3rem)] font-extrabold tracking-[-0.03em] leading-tight">
+            {/* 2. H1 — one per page, product name */}
+            <h1 className="mt-2 text-[clamp(1.75rem,4.5vw,2.75rem)] font-extrabold tracking-[-0.03em] leading-tight">
               {product.name}
             </h1>
 
-            <div className="mt-4 flex items-baseline gap-3">
-              <span className="text-3xl font-black tracking-tight text-primary">
+            {/* 3. Badge chips: condition, warranty, storage */}
+            {(product.condition || warrantyValue || product.storage) && (
+              <div className="mt-3 flex flex-wrap gap-2" aria-label="Product highlights">
+                {product.condition && (
+                  <span className="chip-soft">{product.condition}</span>
+                )}
+                {warrantyValue && (
+                  <span className="chip-soft">{warrantyValue}</span>
+                )}
+                {product.storage && (
+                  <span className="chip-soft">{product.storage}</span>
+                )}
+              </div>
+            )}
+
+            {/* 4. Price */}
+            <div className="mt-5">
+              <p className="text-[2.25rem] font-black tracking-tight text-primary leading-none">
                 {formatPrice(product.price_pence) ?? "Ask in store"}
-              </span>
-              <span className="text-xs font-bold text-muted-foreground">
-                Over-the-counter collection ?? Aughton St
-              </span>
+              </p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Available online &amp; for collection in Ormskirk
+              </p>
             </div>
 
-            {product.description ? (
-              <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-                {product.description}
-              </p>
-            ) : product.short_description ? (
-              <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+            {/* Sold-out notice */}
+            {soldOut && (
+              <div className="mt-4 rounded-xl border border-primary/20 bg-tint p-4 text-sm text-muted-foreground">
+                This item has sold but stock changes regularly.{" "}
+                <a
+                  href={whatsappReserveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-primary hover:underline"
+                >
+                  Message us
+                </a>{" "}
+                and we&apos;ll check incoming stock.
+              </div>
+            )}
+
+            {/* 5. Short summary */}
+            {(product.short_description && !product.description) && (
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                 {product.short_description}
               </p>
-            ) : null}
+            )}
 
-            {soldOut ? (
-              <div className="mt-6 rounded-xl border border-primary/20 bg-tint p-4 text-sm text-muted-foreground">
-                This item has sold but inventory updates regularly. Message us and we will check
-                incoming stock.
-              </div>
-            ) : null}
+            <div className="mt-1 border-t border-border/50" />
 
-            {/* CTAs */}
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {/* 6. CTA block — clear hierarchy */}
+            <div className="mt-6 flex flex-col gap-3">
+              {/* Primary: Reserve / Check stock */}
               <a
-                href={whatsappUrl(
-                  business,
-                  soldOut
-                    ? { kind: "stock", product: product.name }
-                    : { kind: "product", product: product.name },
-                )}
+                id="product-cta-primary"
+                href={whatsappReserveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="press inline-flex min-h-13 items-center justify-center rounded-full bg-whatsapp px-7 text-sm font-extrabold text-whatsapp-foreground shadow-lift"
+                className="press inline-flex min-h-[3.25rem] w-full items-center justify-center rounded-full bg-primary px-8 text-sm font-extrabold text-primary-foreground shadow-soft sm:w-auto"
               >
-                {soldOut ? "Ask about similar stock" : "Enquire on WhatsApp"}
+                {soldOut ? "Check Similar Stock" : "Reserve This Phone"}
               </a>
-              <a
-                href={telUrl(business)}
-                className="press inline-flex min-h-13 items-center justify-center rounded-full bg-primary px-7 text-sm font-extrabold text-primary-foreground shadow-soft"
-              >
-                {soldOut ? "Call the shop" : "Call to reserve"}
-              </a>
-              <DirectionsButton
-                tone="outline"
-                label="Visit 4 Aughton St"
-                className="min-h-13! rounded-full! px-6 text-sm!"
-              />
-            </div>
 
-            {/* In-store pickup notice */}
-            <div className="mt-6 rounded-xl border border-border/80 bg-surface/60 p-4 text-xs leading-relaxed text-muted-foreground">
-              <strong className="font-extrabold text-foreground">Local collection:</strong> Find us
-              at 4 Aughton Street (opposite Costa Coffee) in Ormskirk town centre. Inspect your
-              device and receive a written receipt on the counter.
-            </div>
+              {/* Secondary + tertiary row */}
+              <div className="flex flex-wrap gap-3">
+                {/* WhatsApp — green */}
+                <a
+                  id="product-cta-whatsapp"
+                  href={whatsappReserveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="press inline-flex min-h-[3rem] flex-1 items-center justify-center rounded-full bg-whatsapp px-6 text-sm font-bold text-whatsapp-foreground"
+                >
+                  Enquire on WhatsApp
+                </a>
 
-            {/* Specs */}
-            {details.length > 0 || specs.length > 0 ? (
-              <div className="mt-7 rounded-2xl border border-border/80 bg-card p-5 shadow-2xs">
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
-                  Specifications &amp; Details
-                </h2>
-                <dl className="mt-3 divide-y divide-border/60 text-sm">
-                  {[...details, ...specs].map(([k, v]) => (
-                    <div key={k} className="flex justify-between gap-4 py-2.5">
-                      <dt className="font-bold text-foreground capitalize">
-                        {k.replace(/_/g, " ")}
-                      </dt>
-                      <dd className="text-right font-medium text-muted-foreground">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
+                {/* Call — outlined */}
+                <a
+                  id="product-cta-call"
+                  href={telUrl(business)}
+                  className="press inline-flex min-h-[3rem] flex-1 items-center justify-center rounded-full border border-border px-6 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  Call to Reserve
+                </a>
               </div>
-            ) : null}
+            </div>
+
+            {/* 7. Trust strip */}
+            <div className="mt-6 border-t border-border/50 pt-5">
+              <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-muted-foreground">
+                {warrantyValue && (
+                  <li className="flex items-center gap-1.5">
+                    <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                    {warrantyValue} Included
+                  </li>
+                )}
+                <li className="flex items-center gap-1.5">
+                  <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                  Fully Unlocked
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                  Collection in Ormskirk
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                  Online Ordering Available
+                </li>
+                {batteryHealth && (
+                  <li className="flex items-center gap-1.5">
+                    <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                    Battery: {batteryHealth}
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            {/* 8. Compact local collection box */}
+            <div className="mt-5 rounded-xl border border-border/80 bg-surface/60 p-4">
+              <p className="text-sm leading-relaxed">
+                <strong className="font-extrabold text-foreground">Local collection</strong>
+                {" "}— Available from {shopAddress}. Inspect your device and receive a written
+                receipt at the counter.
+              </p>
+              <div className="mt-2.5">
+                <DirectionsButton
+                  tone="outline"
+                  label="Get Directions"
+                  className="min-h-[2.25rem]! rounded-full! px-4! text-xs!"
+                />
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* ── Full-width sections below the grid ───────────────────────── */}
+        <div className="mt-12 space-y-0 divide-y divide-border/50 lg:mt-16">
+
+          {/* What's Included */}
+          {includedItems && (
+            <div className="py-8">
+              <h2 className="mb-3 text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
+                What&apos;s Included
+              </h2>
+              <p className="text-sm text-foreground">{includedItems}</p>
+            </div>
+          )}
+
+          {/* Warranty */}
+          {warrantyValue && (
+            <div className="py-8">
+              <h2 className="mb-2 text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
+                Warranty
+              </h2>
+              <p className="text-sm font-semibold text-foreground">{warrantyValue} Included</p>
+              {business?.warranty_policy && (
+                <a
+                  href="/terms"
+                  className="mt-1 inline-block text-xs text-muted-foreground underline-offset-2 hover:text-primary hover:underline transition-colors"
+                >
+                  View warranty details
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Specifications — SEO keys filtered, no empty rows */}
+          {(coreDetails.length > 0 || extraSpecs.length > 0) && (
+            <div className="py-8">
+              <h2 className="mb-3 text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
+                Specifications
+              </h2>
+              <dl className="max-w-xl divide-y divide-border/50 text-sm">
+                {coreDetails.map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-4 py-2.5">
+                    <dt className="font-semibold text-foreground">{k}</dt>
+                    <dd className="text-right text-muted-foreground">{v}</dd>
+                  </div>
+                ))}
+                {extraSpecs.map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-4 py-2.5">
+                    <dt className="font-semibold capitalize text-foreground">
+                      {k.replace(/_/g, " ")}
+                    </dt>
+                    <dd className="text-right text-muted-foreground">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
+          {/* About this phone — description split into readable paragraphs */}
+          {product.description && (
+            <div className="py-8">
+              <h2 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
+                About this phone
+              </h2>
+              <div className="max-w-2xl space-y-3">
+                {product.description
+                  .split(/\n\n+/)
+                  .map((para) => para.trim())
+                  .filter(Boolean)
+                  .map((para, i) => (
+                    <p key={i} className="text-sm leading-relaxed text-muted-foreground">
+                      {para}
+                    </p>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Refurbished condition notice — only for refurbished products */}
+          {isRefurbished && (
+            <div className="py-8">
+              <p className="max-w-2xl rounded-xl border border-border/80 bg-surface/60 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+                <strong className="font-bold text-foreground">Refurbished device.</strong>{" "}
+                Cosmetic condition may vary slightly between individual handsets. Contact us if you
+                would like to confirm the exact available unit before ordering.
+              </p>
+            </div>
+          )}
+
+          {/* Product-page cross-sell — accessories & setup help */}
+          <div className="py-8">
+            <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-surface/60 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-base font-bold text-foreground">Buying this phone?</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Ask us about cases, screen protectors, setup and data transfer.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-3">
+                <a
+                  id="product-crosssell-whatsapp"
+                  href={whatsappUrl(business, { kind: "general" })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="press inline-flex min-h-[2.75rem] items-center justify-center rounded-full bg-whatsapp px-5 text-xs font-extrabold text-whatsapp-foreground"
+                >
+                  WhatsApp Us
+                </a>
+                <a
+                  id="product-crosssell-call"
+                  href={telUrl(business)}
+                  className="press inline-flex min-h-[2.75rem] items-center justify-center rounded-full border border-border px-5 text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  Call the Shop
+                </a>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

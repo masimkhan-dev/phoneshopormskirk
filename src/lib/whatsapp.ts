@@ -10,11 +10,62 @@ export type WhatsAppContext =
       condition?: string;
       network?: string;
     }
-  | { kind: "product"; product: string }
-  | { kind: "stock"; product: string }
+  | {
+      kind: "product";
+      product: string;
+      /** Formatted price string e.g. "£650" — include when available */
+      price?: string;
+      condition?: string;
+      storage?: string;
+      model?: string;
+      /** Full public URL of the product page */
+      productUrl?: string;
+    }
+  | {
+      kind: "stock";
+      product: string;
+      price?: string;
+      condition?: string;
+      storage?: string;
+      model?: string;
+      productUrl?: string;
+    }
   | { kind: "unlock"; device?: string; network?: string };
 
-const BUSINESS = "Phone Shop Ormskirk";
+export const CANONICAL_WHATSAPP_NUMBER = "447496499992";
+const BUSINESS = "Phone Store Ormskirk";
+
+/**
+ * Normalizes any UK or international phone string into pure wa.me digits.
+ * Converts UK national format (e.g. "07496 499992") -> "447496499992".
+ * Strips +, spaces, hyphens, brackets, and leading 0.
+ * Falls back to CANONICAL_WHATSAPP_NUMBER if missing, empty, or invalid.
+ */
+export function normalizeWhatsAppNumber(raw?: string | null): string {
+  if (!raw) return CANONICAL_WHATSAPP_NUMBER;
+  let digits = raw.replace(/[^0-9]/g, "");
+  if (!digits) return CANONICAL_WHATSAPP_NUMBER;
+
+  // e.g. 00447496499992 -> 447496499992
+  if (digits.startsWith("0044")) {
+    digits = "44" + digits.slice(4);
+  }
+  // e.g. +44 (0) 7496499992 -> 4407496499992 -> 447496499992
+  if (digits.startsWith("440")) {
+    digits = "44" + digits.slice(3);
+  }
+  // e.g. 07496499992 -> 447496499992 (UK national mobile to international)
+  if (digits.startsWith("0")) {
+    digits = "44" + digits.slice(1);
+  }
+
+  // Must be at least 10 digits to be a valid phone number, else fallback
+  if (digits.length < 10) {
+    return CANONICAL_WHATSAPP_NUMBER;
+  }
+
+  return digits;
+}
 
 function lines(ctx: WhatsAppContext): string[] {
   switch (ctx.kind) {
@@ -40,20 +91,43 @@ function lines(ctx: WhatsAppContext): string[] {
         "",
         "Could you please give me an estimated quote?",
       ];
-    case "product":
+    case "product": {
+      const attrs: string[] = [];
+      if (ctx.condition) attrs.push(ctx.condition);
+      if (ctx.storage) attrs.push(ctx.storage);
+      if (ctx.model && ctx.model !== ctx.product) attrs.push(ctx.model);
       return [
         `Hi ${BUSINESS},`,
         "",
-        `I'm interested in ${ctx.product}.`,
-        "Is this currently available?",
+        "I'm interested in:",
+        ctx.product,
+        ...attrs,
+        "",
+        ...(ctx.price ? [`Price: ${ctx.price}`] : []),
+        ...(ctx.productUrl ? ["", "Product link:", ctx.productUrl] : []),
+        "",
+        "Is this still available to order or collect?",
       ];
-    case "stock":
+    }
+    case "stock": {
+      const attrs: string[] = [];
+      if (ctx.condition) attrs.push(ctx.condition);
+      if (ctx.storage) attrs.push(ctx.storage);
+      if (ctx.model && ctx.model !== ctx.product) attrs.push(ctx.model);
       return [
         `Hi ${BUSINESS},`,
         "",
-        `${ctx.product} is showing as out of stock on your website.`,
-        "Do you know when you'll have one in, or have you got something similar?",
+        "I noticed this product is currently out of stock:",
+        "",
+        ctx.product,
+        ...attrs,
+        "",
+        ...(ctx.price ? [`Price: ${ctx.price}`] : []),
+        ...(ctx.productUrl ? ["", "Product link:", ctx.productUrl] : []),
+        "",
+        "Do you have one available, or can you let me know when it's back in stock?",
       ];
+    }
     case "unlock":
       return [
         `Hi ${BUSINESS},`,
@@ -74,12 +148,16 @@ export function whatsappUrl(
   business: Pick<BusinessSettings, "whatsapp"> | null | undefined,
   ctx: WhatsAppContext = { kind: "general" },
 ): string {
-  const number = (business?.whatsapp ?? "").replace(/[^0-9]/g, "");
+  const number = normalizeWhatsAppNumber(business?.whatsapp);
   const text = encodeURIComponent(lines(ctx).join("\n"));
-  if (!number) return `https://wa.me/?text=${text}`;
   return `https://wa.me/${number}?text=${text}`;
 }
 
 export function telUrl(business: Pick<BusinessSettings, "phone"> | null | undefined) {
-  return `tel:${(business?.phone ?? "").replace(/\s+/g, "")}`;
+  const raw = (business?.phone ?? "").replace(/[^0-9+]/g, "");
+  if (!raw) return "tel:+447496499992";
+  if (raw.startsWith("0")) return `tel:+44${raw.slice(1)}`;
+  if (raw.startsWith("44")) return `tel:+${raw}`;
+  if (raw.startsWith("+")) return `tel:${raw}`;
+  return `tel:${raw}`;
 }

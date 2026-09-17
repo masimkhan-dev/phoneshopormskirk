@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState, useId } from "react";
+import { useState, useId, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import {
@@ -59,7 +59,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
   const isEdit = Boolean(initialData?.id);
   const { data: categories = [] } = useQuery(categoriesQuery);
 
-  // Form fields
+  // ── Form fields ────────────────────────────────────────────────────────────
   const [name, setName] = useState(initialData?.name ?? "");
   const [categoryId, setCategoryId] = useState(initialData?.category_id ?? "");
   const [brand, setBrand] = useState(initialData?.brand ?? "");
@@ -80,7 +80,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
   const [publicVisible, setPublicVisible] = useState(initialData?.public_visible ?? true);
   const [featured, setFeatured] = useState(initialData?.featured ?? false);
 
-  // SEO fields (collapsed by default)
+  // ── SEO fields (collapsed by default) ────────────────────────────────────
   const [isSeoOpen, setIsSeoOpen] = useState(false);
   const [slug, setSlug] = useState(initialData?.slug ?? "");
   const [seoTitle, setSeoTitle] = useState(initialData?.specs?.["seo_title"] ?? "");
@@ -88,7 +88,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
     initialData?.specs?.["meta_description"] ?? "",
   );
 
-  // Images state
+  // ── Images state ──────────────────────────────────────────────────────────
   const [existingImages, setExistingImages] = useState<ProductImage[]>(
     initialData?.product_images
       ? [...initialData.product_images].sort((a, b) => a.sort_order - b.sort_order)
@@ -100,15 +100,95 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 
-  // Financial calculations
+  // ── Validation state ──────────────────────────────────────────────────────
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // ── Unsaved changes tracking ──────────────────────────────────────────────
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Refs for scroll-to + focus on first invalid field (wrapper divs — SelectField/MoneyInput don't forwardRef)
+  const nameRef = useRef<HTMLInputElement>(null);
+  const categoryWrapRef = useRef<HTMLDivElement>(null);
+  const priceWrapRef = useRef<HTMLDivElement>(null);
+
+  // ── Financial calculations ────────────────────────────────────────────────
   const costPence = poundsToPence(cost);
   const pricePence = poundsToPence(price);
   const expectedProfit = pricePence - costPence;
   const marginPct = pricePence > 0 ? ((expectedProfit / pricePence) * 100).toFixed(1) : "0.0";
 
-  // Category options
+  // ── Category options ──────────────────────────────────────────────────────
   const categoryOptions = categories.map((c) => ({ value: c.id, label: c.name }));
 
+  // ── SEO badge: Custom if any SEO field is populated ──────────────────────
+  const hasSeoCustom = Boolean(slug.trim() || seoTitle.trim() || metaDescription.trim());
+
+  // ── Unsaved changes guard ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  function markDirty() {
+    if (!isDirty) setIsDirty(true);
+  }
+
+  function confirmLeave() {
+    if (!isDirty) return true;
+    return window.confirm("You have unsaved changes. Leave without saving?");
+  }
+
+  function handleCancel() {
+    if (!confirmLeave()) return;
+    if (onCancel) {
+      onCancel();
+    } else {
+      navigate({ to: "/admin/products" });
+    }
+  }
+
+  // ── Inline validation ─────────────────────────────────────────────────────
+  function validate(): boolean {
+    const next: Record<string, string> = {};
+
+    if (!name.trim()) next["name"] = "Product name is required";
+    if (!categoryId) next["categoryId"] = "Select a category";
+    if (!price.trim() || isNaN(pricePence) || pricePence <= 0) {
+      next["price"] = "Enter a valid selling price";
+    }
+
+    setErrors(next);
+
+    if (Object.keys(next).length > 0) {
+      // Scroll + focus first failing field
+      // SelectField / MoneyInput don't forwardRef, so we locate the focusable child via querySelector
+      if (next["name"] && nameRef.current) {
+        nameRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+        nameRef.current.focus();
+      } else if (next["categoryId"] && categoryWrapRef.current) {
+        const trigger = categoryWrapRef.current.querySelector<HTMLElement>("button, [role='combobox']")
+          ?? categoryWrapRef.current.querySelector<HTMLElement>("[data-radix-select-trigger]")
+          ?? categoryWrapRef.current.querySelector<HTMLElement>("button");
+        categoryWrapRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+        trigger?.focus();
+      } else if (next["price"] && priceWrapRef.current) {
+        const input = priceWrapRef.current.querySelector<HTMLInputElement>("input");
+        priceWrapRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+        input?.focus();
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  // ── Image handlers ────────────────────────────────────────────────────────
   function handleSelectImages(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -144,6 +224,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
 
     if (toAdd.length > 0) {
       setPendingFiles((prev) => [...prev, ...toAdd]);
+      markDirty();
     }
     e.target.value = "";
   }
@@ -154,6 +235,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
       if (item) URL.revokeObjectURL(item.previewUrl);
       return prev.filter((f) => f.id !== id);
     });
+    markDirty();
   }
 
   async function handleDeleteExisting(image: ProductImage) {
@@ -179,18 +261,9 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
     }
   }
 
+  // ── Save mutation ─────────────────────────────────────────────────────────
   const saveProduct = useMutation({
     mutationFn: async () => {
-      if (!name.trim()) {
-        throw new Error("Please enter a product name.");
-      }
-      if (!categoryId) {
-        throw new Error("Please select a product category.");
-      }
-      if (pricePence <= 0) {
-        throw new Error("Please enter a valid selling price greater than £0.00.");
-      }
-
       // Preserve existing specs and merge SEO metadata
       const currentSpecs: Record<string, string> = { ...(initialData?.specs ?? {}) };
       if (seoTitle.trim()) {
@@ -303,6 +376,8 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
       return saved;
     },
     onSuccess: (saved) => {
+      // Reset dirty state so no unsaved-changes confirm fires on navigate
+      setIsDirty(false);
       toast.success(
         isEdit ? "Product updated successfully." : "Product added to catalogue successfully.",
       );
@@ -327,14 +402,42 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
         ? "Save changes"
         : "Create product";
 
+  // ── Form submit ───────────────────────────────────────────────────────────
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setHasSubmitted(true);
+    if (!validate()) return;
+    saveProduct.mutate();
+  }
+
+  // ── Char counter helper ───────────────────────────────────────────────────
+  function CharCounter({ value, limit = 160 }: { value: string; limit?: number }) {
+    const count = value.length;
+    const over = count > limit;
+    return (
+      <span
+        className={cn(
+          "text-[0.68rem] tabular-nums",
+          over ? "font-semibold text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {count} / {limit}
+      </span>
+    );
+  }
+
+  // ── Field error helper ────────────────────────────────────────────────────
+  function FieldError({ field }: { field: string }) {
+    if (!hasSubmitted || !errors[field]) return null;
+    return (
+      <p className="mt-0.5 text-[0.7rem] font-medium text-destructive" role="alert">
+        {errors[field]}
+      </p>
+    );
+  }
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        saveProduct.mutate();
-      }}
-      className="pb-24"
-    >
+    <form onSubmit={handleSubmit} className="pb-24" noValidate>
       {/* ── STICKY TOP BAR ─────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-admin-border bg-admin-panel/95 px-4 py-3 shadow-sm backdrop-blur-md">
         <div className="flex min-w-0 items-center gap-3">
@@ -343,7 +446,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
             variant="outline"
             size="sm"
             className="shrink-0"
-            onClick={onCancel ?? (() => navigate({ to: "/admin/products" }))}
+            onClick={handleCancel}
           >
             <ArrowLeft className="mr-1.5 size-4" /> Back
           </Button>
@@ -354,7 +457,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
             <p className="text-[0.7rem] leading-tight text-muted-foreground">
               {isEdit
                 ? "Update details, media, and publishing"
-                : "Full catalogue listing — images, description, SEO"}
+                : "Create a product for website, shop stock and search"}
             </p>
           </div>
         </div>
@@ -384,14 +487,14 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
             variant="outline"
             size="sm"
             disabled={isBusy}
-            onClick={onCancel ?? (() => navigate({ to: "/admin/products" }))}
+            onClick={handleCancel}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             size="sm"
-            disabled={isBusy || !name.trim()}
+            disabled={isBusy}
             className="font-bold shadow-soft"
           >
             {isBusy && <Loader2 className="mr-2 size-3.5 animate-spin" />}
@@ -400,51 +503,56 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto space-y-4">
-        {/* ── SECTION 1: BASIC INFORMATION ───────────────────────────── */}
+      <div className="max-w-[68rem] mx-auto space-y-4">
+        {/* ── SECTION 1: BASIC INFORMATION ────────────────────────────── */}
         <Section title="Basic Information">
           <div className="p-4">
             <FieldGrid cols={2}>
               <Field label="Product name *" htmlFor="prod-name">
                 <Input
                   id="prod-name"
-                  className="h-9 font-medium"
+                  ref={nameRef}
+                  className={cn("h-9 font-medium", hasSubmitted && errors["name"] && "border-destructive focus-visible:ring-destructive/30")}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. 20W USB-C Fast Charger"
+                  onChange={(e) => { setName(e.target.value); markDirty(); if (errors["name"]) setErrors((p) => ({ ...p, name: "" })); }}
+                  placeholder="e.g. Apple iPhone 15 Pro Max 256GB"
                   autoFocus={!isEdit}
-                  required
                 />
+                <FieldError field="name" />
               </Field>
 
               <Field label="Category *" htmlFor="prod-cat">
-                <SelectField
-                  id="prod-cat"
-                  value={categoryId}
-                  onChange={setCategoryId}
-                  options={categoryOptions}
-                  placeholder={
-                    categories.length === 0 ? "No categories found" : "Select a category…"
-                  }
-                />
+                <div ref={categoryWrapRef}>
+                  <SelectField
+                    id="prod-cat"
+                    value={categoryId}
+                    onChange={(v) => { setCategoryId(v); markDirty(); if (errors["categoryId"]) setErrors((p) => ({ ...p, categoryId: "" })); }}
+                    options={categoryOptions}
+                    placeholder={
+                      categories.length === 0 ? "No categories found" : "Select a category…"
+                    }
+                  />
+                </div>
+                <FieldError field="categoryId" />
               </Field>
 
-              <Field label="Brand (optional)" htmlFor="prod-brand">
-                <ComboBox id="prod-brand" value={brand} onChange={setBrand} options={BRANDS} />
+              <Field label="Brand" htmlFor="prod-brand">
+                <span className="sr-only">Optional</span>
+                <ComboBox id="prod-brand" value={brand} onChange={(v) => { setBrand(v); markDirty(); }} options={BRANDS} />
               </Field>
 
-              <Field label="Model (optional)" htmlFor="prod-model">
+              <Field label="Model" htmlFor="prod-model">
                 <Input
                   id="prod-model"
                   className="h-9"
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
+                  onChange={(e) => { setModel(e.target.value); markDirty(); }}
                   placeholder="e.g. Universal / MagSafe / iPhone 15"
                 />
               </Field>
 
               <Field
-                label="SKU / Barcode (optional)"
+                label="SKU / Barcode"
                 htmlFor="prod-sku"
                 hint="Scan barcode or leave blank to auto-generate"
               >
@@ -452,7 +560,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
                   id="prod-sku"
                   className="h-9 font-mono text-xs"
                   value={sku}
-                  onChange={(e) => setSku(e.target.value)}
+                  onChange={(e) => { setSku(e.target.value); markDirty(); }}
                   placeholder="Scan or type barcode"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -465,22 +573,24 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
           </div>
         </Section>
 
-        {/* ── SECTION 2: PRICING & INVENTORY ─────────────────────────── */}
+        {/* ── SECTION 2: PRICING & INVENTORY ──────────────────────────── */}
         <Section title="Pricing & Inventory">
           <div className="p-4 space-y-4">
             <FieldGrid cols={2}>
               <Field label="Cost price" htmlFor="prod-cost" hint="What the shop pays for this item">
-                <MoneyInput id="prod-cost" value={cost} onChange={setCost} placeholder="0.00" />
+                <MoneyInput id="prod-cost" value={cost} onChange={(v) => { setCost(v); markDirty(); }} placeholder="0.00" />
               </Field>
 
-              <Field label="Selling price *" htmlFor="prod-price" hint="Retail counter price">
-                <MoneyInput
-                  id="prod-price"
-                  value={price}
-                  onChange={setPrice}
-                  placeholder="0.00"
-                  required
-                />
+              <Field label="Selling price *" htmlFor="prod-price" hint="Retail selling price">
+                <div ref={priceWrapRef}>
+                  <MoneyInput
+                    id="prod-price"
+                    value={price}
+                    onChange={(v) => { setPrice(v); markDirty(); if (errors["price"]) setErrors((p) => ({ ...p, price: "" })); }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <FieldError field="price" />
               </Field>
 
               {/* STOCK SAFETY LOGIC */}
@@ -488,14 +598,14 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
                 <Field
                   label="Opening stock quantity"
                   htmlFor="prod-opening-qty"
-                  hint="Current units on shelf to initialize stock"
+                  hint="Units on shelf when this product is created"
                 >
                   <Input
                     id="prod-opening-qty"
                     className="h-9 tabular-nums font-semibold"
                     inputMode="numeric"
                     value={openingQuantity}
-                    onChange={(e) => setOpeningQuantity(e.target.value.replace(/[^0-9]/g, ""))}
+                    onChange={(e) => { setOpeningQuantity(e.target.value.replace(/[^0-9]/g, "")); markDirty(); }}
                     placeholder="0"
                   />
                 </Field>
@@ -519,14 +629,14 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
               <Field
                 label="Reorder warning level"
                 htmlFor="prod-reorder"
-                hint="Alert when stock hits this number"
+                hint="Alert when stock reaches this level"
               >
                 <Input
                   id="prod-reorder"
                   className="h-9 tabular-nums"
                   inputMode="numeric"
                   value={reorderLevel}
-                  onChange={(e) => setReorderLevel(e.target.value.replace(/[^0-9]/g, ""))}
+                  onChange={(e) => { setReorderLevel(e.target.value.replace(/[^0-9]/g, "")); markDirty(); }}
                   placeholder="0"
                 />
               </Field>
@@ -556,7 +666,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
           </div>
         </Section>
 
-        {/* ── SECTION 3: PRODUCT IMAGES ──────────────────────────────── */}
+        {/* ── SECTION 3: PRODUCT IMAGES ────────────────────────────────── */}
         <Section title="Product Images">
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -590,7 +700,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
               <label
                 htmlFor={fileInputId}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-admin-border/80 bg-surface/30 py-10 text-center cursor-pointer transition-colors hover:border-primary/40 hover:bg-tint/30",
+                  "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-admin-border/80 bg-surface/30 py-7 text-center cursor-pointer transition-colors hover:border-primary/40 hover:bg-tint/30",
                   isBusy && "pointer-events-none opacity-50",
                 )}
               >
@@ -628,6 +738,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
                     <button
                       type="button"
                       title="Delete image"
+                      aria-label={`Delete image ${idx + 1}`}
                       disabled={deletingImageId === img.id || isBusy}
                       onClick={() => handleDeleteExisting(img)}
                       className="absolute right-2 top-2 rounded-full bg-destructive/90 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive focus:opacity-100 disabled:opacity-50"
@@ -653,6 +764,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
                     <button
                       type="button"
                       title="Remove file"
+                      aria-label={`Remove pending image ${idx + 1}`}
                       disabled={isBusy}
                       onClick={() => handleRemovePending(item.id)}
                       className="absolute right-2 top-2 rounded-full bg-foreground/85 p-1.5 text-background hover:bg-foreground transition-colors"
@@ -686,69 +798,80 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
           </div>
         </Section>
 
-        {/* ── SECTION 4: WEBSITE CONTENT ─────────────────────────────── */}
+        {/* ── SECTION 4: WEBSITE CONTENT ──────────────────────────────── */}
         <Section title="Website Content">
           <div className="p-4 space-y-4">
             <Field
               label="Short summary"
               htmlFor="prod-short-desc"
-              hint="1–2 sentences shown on product cards and search results"
+              hint="Shown on product cards and search results"
             >
-              <Input
-                id="prod-short-desc"
-                className="h-9"
-                value={shortDescription}
-                onChange={(e) => setShortDescription(e.target.value)}
-                placeholder="e.g. Certified 20W fast charging plug compatible with iPhone and iPad."
-              />
+              <div className="space-y-1">
+                <Input
+                  id="prod-short-desc"
+                  className="h-9"
+                  value={shortDescription}
+                  onChange={(e) => { setShortDescription(e.target.value); markDirty(); }}
+                  placeholder="e.g. Certified 20W fast charging plug compatible with iPhone and iPad."
+                />
+                <div className="flex justify-end">
+                  <CharCounter value={shortDescription} />
+                </div>
+              </div>
             </Field>
 
             <Field
               label="Full description"
               htmlFor="prod-desc"
-              hint="Detailed specs, compatibility, and features for the product page"
+              hint="Detailed features, compatibility, condition, warranty and what's included"
             >
               <Textarea
                 id="prod-desc"
-                rows={4}
+                rows={5}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => { setDescription(e.target.value); markDirty(); }}
                 placeholder="Provide complete product details, compatibility, what's in the box, and warranty information…"
                 className="resize-y text-sm leading-relaxed"
               />
             </Field>
+          </div>
+        </Section>
 
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Visibility
-              </p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <CheckTile
-                  checked={publicVisible}
-                  onChange={(v) => {
-                    setPublicVisible(v);
-                    if (!v) setFeatured(false);
-                  }}
-                  label="Publish on website"
-                />
-                <CheckTile
-                  checked={featured}
-                  disabled={!publicVisible}
-                  onChange={setFeatured}
-                  label="Feature on homepage"
-                />
-              </div>
+        {/* ── SECTION 5: VISIBILITY ────────────────────────────────────── */}
+        <Section title="Visibility">
+          <div className="p-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <CheckTile
+                checked={publicVisible}
+                onChange={(v) => {
+                  setPublicVisible(v);
+                  if (!v) setFeatured(false);
+                  markDirty();
+                }}
+                label="Publish on website"
+              />
+              <CheckTile
+                checked={featured}
+                disabled={!publicVisible}
+                onChange={(v) => { setFeatured(v); markDirty(); }}
+                label="Feature on homepage"
+              />
+            </div>
+            <div className="mt-2 space-y-1">
               {!publicVisible && (
-                <p className="mt-2 text-[0.72rem] leading-snug text-muted-foreground">
+                <p className="text-[0.72rem] leading-snug text-muted-foreground">
                   Website publishing is <strong>OFF</strong>. This item is still available at the
                   counter via Direct Sale.
                 </p>
               )}
+              <p className="text-[0.7rem] text-muted-foreground">
+                Publish: show this product on the public shop · Feature: highlight in featured sections
+              </p>
             </div>
           </div>
         </Section>
 
-        {/* ── SECTION 5: SEO (COLLAPSED) ─────────────────────────────── */}
+        {/* ── SECTION 6: SEO (COLLAPSED) ──────────────────────────────── */}
         <div className="admin-card overflow-hidden">
           <button
             type="button"
@@ -765,8 +888,21 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
                 </p>
               </div>
             </div>
-            <div className="shrink-0 rounded border border-admin-border p-1 text-muted-foreground">
-              {isSeoOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Auto / Custom badge */}
+              <span
+                className={cn(
+                  "rounded px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider",
+                  hasSeoCustom
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {hasSeoCustom ? "Custom" : "Auto"}
+              </span>
+              <div className="rounded border border-admin-border p-1 text-muted-foreground">
+                {isSeoOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </div>
             </div>
           </button>
 
@@ -781,7 +917,7 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
                   id="prod-slug"
                   className="h-9 font-mono text-xs"
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
+                  onChange={(e) => { setSlug(e.target.value); markDirty(); }}
                   placeholder={
                     name ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "product-slug"
                   }
@@ -791,13 +927,13 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
               <Field
                 label="SEO Title"
                 htmlFor="prod-seo-title"
-                hint={`Default: "${name || "Product"} | Phone Store Ormskirk"`}
+                hint={`Recommended under 60 characters · Default: "${name || "Product"} | Phone Store Ormskirk"`}
               >
                 <Input
                   id="prod-seo-title"
                   className="h-9"
                   value={seoTitle}
-                  onChange={(e) => setSeoTitle(e.target.value)}
+                  onChange={(e) => { setSeoTitle(e.target.value); markDirty(); }}
                   placeholder={`${name || "Product"} | Phone Store Ormskirk`}
                 />
               </Field>
@@ -805,25 +941,28 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
               <Field
                 label="Meta Description"
                 htmlFor="prod-meta-desc"
-                hint="Summary for Google and search engine previews (150–160 chars)"
+                hint="Summary for Google and search engine previews"
               >
                 <Textarea
                   id="prod-meta-desc"
                   rows={2}
                   value={metaDescription}
-                  onChange={(e) => setMetaDescription(e.target.value)}
+                  onChange={(e) => { setMetaDescription(e.target.value); markDirty(); }}
                   placeholder={
                     shortDescription ||
                     `${name || "Product"} available at Phone Store Ormskirk. Reserve over WhatsApp or collect in store.`
                   }
                   className="text-xs leading-relaxed"
                 />
+                <div className="flex justify-end mt-1">
+                  <CharCounter value={metaDescription} />
+                </div>
               </Field>
             </div>
           )}
         </div>
       </div>
-      {/* end max-w-5xl */}
+      {/* end max-w-[68rem] */}
 
       {/* ── FIXED BOTTOM ACTION BAR ──────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-end gap-3 border-t border-admin-border bg-admin-panel/95 px-4 py-3 shadow-[0_-1px_3px_oklch(0.18_0_0/6%)] backdrop-blur-md sm:px-6 lg:px-8">
@@ -852,11 +991,11 @@ export function ProductForm({ initialData, onSuccess, onCancel }: ProductFormPro
           variant="outline"
           size="sm"
           disabled={isBusy}
-          onClick={onCancel ?? (() => navigate({ to: "/admin/products" }))}
+          onClick={handleCancel}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isBusy || !name.trim()} className="font-bold shadow-soft">
+        <Button type="submit" disabled={isBusy} className="font-bold shadow-soft">
           {isBusy && <Loader2 className="mr-2 size-3.5 animate-spin" />}
           {saveLabel}
         </Button>
